@@ -12,26 +12,72 @@ The pipeline supports parallel processing of dozens of amplicons or samples in a
 In summary, FastAnalyzr BE simplifies the analysis of base editing data by automating key steps—batch file creation, CRISPResso2 execution, result interpretation, and visualization—enhancing efficiency, scalability, and reliability of CRISPResso2-based workflows.
 
 # Installation
+The way to install FastAnalyzr BE is via conda, follow these steps to installation:
 
-
+1. Clone the repository
 ```
-
-# 1. Create and activate the Conda environment
-conda env create -f environment.yml
-conda activate Fast_Analyzr_BE
-
-# 2. Clone the repository
 git clone https://github.com/PROADI-TIAF/Fast-Analyzr-BE.git
 cd Fast-Analyzr-BE
-
-# 3. Make the script executable
-chmod +x Fast_Analyzr_BE.sh
-
-# 4. (Optional) Move script to global PATH (requires sudo)
-sudo mv Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
-
-# 5. Check that the script works
-Fast_Analyzr_BE -h
-
 ```
 
+2. Make the script executable
+```
+chmod +x Fast_Analyzr_BE.sh
+```
+
+3. Move script to global PATH (requires sudo)
+```
+sudo mv Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
+```
+
+4. Create and activate the Conda environment
+```
+conda env create -f Fast_Analyzr_BE.yml
+conda activate Fast_Analyzr_BE
+```
+
+5. Check that the script works
+```
+Fast_Analyzr_BE -h
+```
+
+# Usage
+After installing FastAnalyzr BE, follow these steps to run an analysis:
+
+1. Go to your analysis folder
+```
+cd /path/to/your/analysis_folder
+```
+
+2. Run the program
+```
+Fast_Analyzr_BE
+```
+
+3. Use menu options (optional)
+| Flag                                 | Description                                          |
+| ------------------------------------ | ---------------------------------------------------- |
+| `-n`, `--no-batch`                   | Do not open the HTML file and create the Batch file. |
+| `-s`, `--skip-batch-crispresso`      | Skip Batch file creation and CRISPResso2 execution.  |
+| `-c`, `--crispresso <key> [<value>]` | Run CRISPResso2 for a specific key/value pair.       |
+
+You can view all options at any time by running:
+```
+Fast_Analyzr_BE -h
+```
+
+5. Completion message
+If everything runs correctly, you will see the following ASCII art indicating the analysis has completed successfully:
+```
+                           _    _                                                     _    _
+                          (_\__/(,_                                                  (_\__/(,_
+                          | \  _////-._                                             | \  _////-._
+           _    _         L_/__  => __/ \                            _    _         L_/__  => __/ \
+          (_\__/(,_       |=====;__/___./                           (_\__/(,_       |=====;__/___./
+          | \  _////-._   '-'-'-''''''''                            | \  _////-._   '-'-'-''''''''
+          J_/___'=> __/ \                                           J_/___'=> __/ \
+          |=====;__/___./                                           |=====;__/___./
+          '-'-'-''''''''                                            '-'-'-''''''''
+
+Analysis completed!
+```
