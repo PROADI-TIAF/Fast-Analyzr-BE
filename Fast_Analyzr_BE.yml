@@ -1,4 +1,4 @@
-name: Fast_Analyzer_BE
+name: Fast_Analyzr_BE
 channels:
   - conda-forge
   - bioconda
