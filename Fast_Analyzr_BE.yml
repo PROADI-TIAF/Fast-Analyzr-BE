@@ -18,5 +18,9 @@ dependencies:
   - r-ggtext
   - r-stringr
   - r-rcolorbrewer
-  - bioconductor-biostrings
   - r-png
+  # Pacotes Bioconductor (nome correto para conda)
+  - bioconductor-biostrings
+  - bioconductor-iranges
+  - bioconductor-genomeinfodb
+  - bioconductor-genomeinfodbdata
