@@ -55,11 +55,9 @@ Fast_Analyzr_BE
 ```
 
 3. Use menu options (optional)
-| Flag                                 | Description                                          |
-| ------------------------------------ | ---------------------------------------------------- |
-| `-n`, `--no-batch`                   | Do not open the HTML file and create the Batch file. |
-| `-s`, `--skip-batch-crispresso`      | Skip Batch file creation and CRISPResso2 execution.  |
-| `-c`, `--crispresso <key> [<value>]` | Run CRISPResso2 for a specific key/value pair.       |
+Fast_Analyzr_BE -n      # Do not open the HTML file and create the Batch file
+Fast_Analyzr_BE -s      # Skip Batch file creation and CRISPResso2 execution
+Fast_Analyzr_BE -c      # Run CRISPResso2 for a specific key/value pair
 
 You can view all options at any time by running:
 ```
