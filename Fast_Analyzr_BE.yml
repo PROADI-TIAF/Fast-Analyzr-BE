@@ -1,22 +1,14 @@
-name: Fast_Analyzr_BE
+name: Fast_Analyzer_BE
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
   - crispresso2
-  - r-base=4.1.2
+  - r-base=4.3.0
   - r-essentials
   - r-rmarkdown
   - r-knitr
-  - r-dplyr
-  - r-tidyr
-  - r-readxl
   - r-openxlsx
-  - r-ggplot2
-  - r-scales
-  - r-ggtext
-  - r-stringr
-  - r-rcolorbrewer
   - r-png
-  - bioconductor-biostrings
+  - r-ggtext
