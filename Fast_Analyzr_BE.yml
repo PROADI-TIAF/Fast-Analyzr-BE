@@ -20,4 +20,3 @@ dependencies:
   - r-rcolorbrewer
   - bioconductor-biostrings
   - r-png
-  - r-tools
