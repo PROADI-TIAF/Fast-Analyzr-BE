@@ -12,3 +12,26 @@ The pipeline supports parallel processing of dozens of amplicons or samples in a
 In summary, FastAnalyzr BE simplifies the analysis of base editing data by automating key steps—batch file creation, CRISPResso2 execution, result interpretation, and visualization—enhancing efficiency, scalability, and reliability of CRISPResso2-based workflows.
 
 # Installation
+
+
+```
+
+# 1. Create and activate the Conda environment
+conda env create -f environment.yml
+conda activate Fast_Analyzr_BE
+
+# 2. Clone the repository
+git clone https://github.com/PROADI-TIAF/Fast-Analyzr-BE.git
+cd Fast-Analyzr-BE
+
+# 3. Make the script executable
+chmod +x Fast_Analyzr_BE.sh
+
+# 4. (Optional) Move script to global PATH (requires sudo)
+sudo mv Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
+
+# 5. Check that the script works
+Fast_Analyzr_BE -h
+
+```
+
