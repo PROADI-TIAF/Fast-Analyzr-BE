@@ -28,6 +28,7 @@ The pipeline supports parallel processing of dozens of amplicons or samples, wit
 # Requirements
 1. Conda – https://docs.conda.io/en/latest/miniconda.html
 2. Google Chrome – https://www.google.com/chrome/
+
 Note for WSL users: Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl
 
 # Installation
