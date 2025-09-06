@@ -70,3 +70,18 @@ Fast_Analyzr_BE
 # 3. Use menu options (optional)
 Fast_Analyzr_BE -h
 ```
+
+# Command line options
+
+```
+-h, --help                          Display this help message
+-n, --no-batch                      Do not open the HTML file and create the Batch file
+-s, --skip-batch-crispresso         Skip Batch file creation and CRISPResso2 execution
+-c, --crispresso <key> [<value>]    Add a custom argument to CRISPRessoBatch execution.
+                                    Allowed keys:   min_frequency_alleles_around_cut_to_plot <0-100>,
+                                                    base_editor_output,
+                                                    conversion_nuc_from <A,T,C,G>,
+                                                    conversion_nuc_to <A,T,C,G>,
+                                                    n_processes <Number of processes. Can be set to 'max'>.
+-ha, --haplotypes                   Runs haplotype analysis on metadata files.
+```
