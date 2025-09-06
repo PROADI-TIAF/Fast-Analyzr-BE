@@ -16,6 +16,7 @@ Fast Analyzer BE is an open-source tool designed to simplify and standardize bas
           '-'-'-''''''''                                                                          '-'-'-''''''''
 ```        
 
+
 # Summary
 Base editing technologies have transformed gene therapy by enabling precise correction of single-nucleotide mutations without inducing double-strand DNA breaks. Cytosine and adenine base editors (CBEs and ABEs) allow targeted conversions of C•G→T•A and A•T→G•C, respectively. Base editing outcomes are typically assessed by next-generation sequencing (NGS) of PCR amplicons, known as amplicon sequencing. This method provides single-nucleotide resolution, supports high-throughput analysis of multiple targets, and is considered the gold standard for validating genome editing experiments.
 Among post-NGS analysis software, CRISPResso2 (https://github.com/pinellolab/CRISPResso2) is widely used. It integrates quality filtering, alignment, report generation, and quantification of editing outcomes, including indels and base editing efficiencies. However, its batch mode requires a strictly formatted input file and produces numerous output files (HTML reports, alignment tables, frequency matrices), making data preparation and consolidation time-consuming and error-prone.
@@ -25,14 +26,16 @@ To address these challenges, we developed FastAnalyzr BE, an automated tool for 
 3) Result compilation & visualization – An R script aggregates outputs into unified summary tables, Excel files, and visualizations (heatmaps, haplotype analysis if needed).
 The pipeline supports parallel processing of dozens of amplicons or samples, with outputs ready for statistical analysis. By ensuring format compliance and automating result aggregation, FastAnalyzr BE reduces errors, saves time, and enhances the scalability and reliability of CRISPResso2-based workflows.
 
+
 # Requirements
 1. Conda – https://docs.conda.io/en/latest/miniconda.html
 2. Google Chrome – https://www.google.com/chrome/
 
 Note for WSL users: Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl
 
+
 # Installation
-The way to install FastAnalyzr BE is via conda, follow these steps to installation:
+The way to install FastAnalyzr BE is via conda, follow these steps:
 
 ```
 # 1. Clone the repository
@@ -53,6 +56,7 @@ conda activate Fast_Analyzr_BE
 Fast_Analyzr_BE -h
 ```
 
+
 # Usage
 After installing FastAnalyzr BE, follow these steps to run an analysis:
 
@@ -64,26 +68,5 @@ cd /path/to/your/analysis_folder
 Fast_Analyzr_BE
 
 # 3. Use menu options (optional)
-#Fast_Analyzr_BE -n      # Do not open the HTML file and create the Batch file
-#Fast_Analyzr_BE -s      # Skip Batch file creation and CRISPResso2 execution
-#Fast_Analyzr_BE -c      # Run CRISPResso2 for a specific key/value pair
-# You can view all options at any time by running:
 Fast_Analyzr_BE -h
-```
-
-Completion message
-If everything runs correctly, you will see the following ASCII art indicating the analysis has completed successfully:
-
-```
-                           _    _                                                     _    _
-                          (_\__/(,_                                                  (_\__/(,_
-                          | \  _////-._                                             | \  _////-._
-           _    _         L_/__  => __/ \                            _    _         L_/__  => __/ \
-          (_\__/(,_       |=====;__/___./                           (_\__/(,_       |=====;__/___./
-          | \  _////-._   '-'-'-''''''''                            | \  _////-._   '-'-'-''''''''
-          J_/___'=> __/ \                                           J_/___'=> __/ \
-          |=====;__/___./                                           |=====;__/___./
-          '-'-'-''''''''                                            '-'-'-''''''''
-
-Analysis completed!
 ```
