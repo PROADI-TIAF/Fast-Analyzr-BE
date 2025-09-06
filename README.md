@@ -25,9 +25,9 @@ To address these challenges, we developed FastAnalyzr BE, an automated tool for 
 3) Result compilation & visualization – An R script aggregates outputs into unified summary tables, Excel files, and visualizations (heatmaps, haplotype analysis if needed).
 The pipeline supports parallel processing of dozens of amplicons or samples, with outputs ready for statistical analysis. By ensuring format compliance and automating result aggregation, FastAnalyzr BE reduces errors, saves time, and enhances the scalability and reliability of CRISPResso2-based workflows.
 
-#Requirements
-Conda – https://docs.conda.io/en/latest/miniconda.html
-Google Chrome – https://www.google.com/chrome/
+# Requirements
+1. Conda – https://docs.conda.io/en/latest/miniconda.html
+2. Google Chrome – https://www.google.com/chrome/
 Note for WSL users: Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl
 
 # Installation
