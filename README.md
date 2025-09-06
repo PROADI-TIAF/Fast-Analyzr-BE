@@ -1,6 +1,7 @@
 # Fast-Analyzr-BE: An automated tool for efficient base editing analysis
 Fast Analyzer BE is an open-source tool designed to simplify and standardize base editing analysis. It supports both Adenine Base Editing (ABE) and Cytosine Base Editing (CBE), providing a complete pipeline from raw sequencing data to final results. The tool automates preprocessing, guide classification, haplotype detection, and visualization, ensuring consistent and reproducible outputs. With user-friendly scripts and R-based reports, Fast Analyzer BE enables researchers to accurately quantify and compare editing efficiencies across samples, making it a valuable resource for genome editing studies.
 
+```
                                                          ~~~ Fast Analyzr BE ~~~
                                      A script for quick and easy analysis focused on base editors
 
@@ -13,7 +14,7 @@ Fast Analyzer BE is an open-source tool designed to simplify and standardize bas
           J_/___'=> __/ \                                                                         J_/___'=> __/ \
           |=====;__/___./                                     [Version 1.0]                       |=====;__/___./
           '-'-'-''''''''                                                                          '-'-'-''''''''
-          
+```        
 
 # Summary
 Base editing technologies have transformed gene therapy by enabling precise correction of single-nucleotide mutations without inducing double-strand DNA breaks. Cytosine and adenine base editors (CBEs and ABEs) allow targeted conversions of C•G→T•A and A•T→G•C, respectively. Base editing outcomes are typically assessed by next-generation sequencing (NGS) of PCR amplicons, known as amplicon sequencing. This method provides single-nucleotide resolution, supports high-throughput analysis of multiple targets, and is considered the gold standard for validating genome editing experiments.
@@ -71,6 +72,8 @@ Fast_Analyzr_BE -h
 
 Completion message
 If everything runs correctly, you will see the following ASCII art indicating the analysis has completed successfully:
+
+```
                            _    _                                                     _    _
                           (_\__/(,_                                                  (_\__/(,_
                           | \  _////-._                                             | \  _////-._
@@ -82,3 +85,4 @@ If everything runs correctly, you will see the following ASCII art indicating th
           '-'-'-''''''''                                            '-'-'-''''''''
 
 Analysis completed!
+```
