@@ -1,72 +1,76 @@
-# Fast-Analyzr-BE: An automated tool for efficient base editing analysis in gene therapy
+# Fast-Analyzr-BE: An automated tool for efficient base editing analysis
 Fast Analyzer BE is an open-source tool designed to simplify and standardize base editing analysis. It supports both Adenine Base Editing (ABE) and Cytosine Base Editing (CBE), providing a complete pipeline from raw sequencing data to final results. The tool automates preprocessing, guide classification, haplotype detection, and visualization, ensuring consistent and reproducible outputs. With user-friendly scripts and R-based reports, Fast Analyzer BE enables researchers to accurately quantify and compare editing efficiencies across samples, making it a valuable resource for genome editing studies.
+
+                                                         ~~~ Fast Analyzr BE ~~~
+                                     A script for quick and easy analysis focused on base editors
+
+                           _    _                                                                                  _    _
+                          (_\__/(,_                    ____________________________                               (_\__/(,_
+                          | \  _////-._               |  __  __  __ ___    __  __  |                              | \  _////-._
+           _    _         L_/__  => __/ \             | |__ |__||__  |    |__)|__  |               _    _         L_/__  => __/ \
+          (_\__/(,_       |=====;__/___./             | |   |  | __| |    |__)|__  |              (_\__/(,_       |=====;__/___./
+          | \  _////-._   '-'-'-''''''''              |____________________________|              | \  _////-._   '-'-'-''''''''
+          J_/___'=> __/ \                                                                         J_/___'=> __/ \
+          |=====;__/___./                                     [Version 1.0]                       |=====;__/___./
+          '-'-'-''''''''                                                                          '-'-'-''''''''
+          
+
 # Summary
-Base editing technologies have revolutionized gene therapy by enabling precise correction of single-nucleotide mutations without inducing double-strand DNA breaks. Cytosine and adenine base editors (CBEs and ABEs) allow targeted conversions of C•G→T•A and A•T→G•C, respectively. The assessment of base editing outcomes, with high sensitivity and resolution, is typically performed using next-generation sequencing (NGS) of PCR amplicons—a method known as amplicon sequencing. This approach enables high-throughput analysis of multiple genomic targets at single-nucleotide resolution and is considered the gold standard for validating genome editing experiments.
-Among the various post-NGS analysis software for genome editing, CRISPResso2 (https://github.com/pinellolab/CRISPResso2) is widely used. It integrates quality filtering, alignment, report generation, and precise quantification of results. CRISPResso2 provides comprehensive analysis of base editing efficiencies, detection of genomic insertions/deletions (indels), and a batch mode for comparing multiple experiments. However, this batch mode requires a strictly formatted input file, which can be a barrier for non-expert users. Additionally, it generates numerous output files (HTML reports, alignment tables, and frequency matrices), making data consolidation time-consuming and prone to errors.
-To address these challenges, we developed FastAnalyzr BE, an automated tool that simplifies the quantification of base editing efficiencies and indel frequencies. FastAnalyzr BE is distributed as an executable shell (Bash) script with additional R-based processing steps. Installation is managed via Conda (https://anaconda.org/anaconda/conda) and the tool is compatible with Linux and macOS platforms.
-FastAnalyzr BE consists of three main steps:
-1) Batch file creation: When launched, the software opens a template HTML file containing a table with all required columns. Integrated validations prevent the inclusion of incorrect characters or blank spaces. After filling out the table, the user exports a tab-delimited .txt file. The program also identifies any incorrect .txt files in the working directory.
-2) Analysis via CRISPResso2: Once the batch format is validated, FastAnalyzr BE runs CRISPResso2 for each specified target, generating the output files needed for the next step.
-3) Compilation and visualization of results: An R script automatically traverses the CRISPResso2 output directories, compiling total counts, aligned reads, base editing efficiencies, indel frequencies and haplotypes (if necessary). All results are organized into unified summary tables. Visual summaries, including heatmaps and Excel tables, are also generated to facilitate comparative and interpretative analysis.
-The pipeline supports parallel processing of dozens of amplicons or samples in a single run, making it ideal for high-throughput applications. All output tables and graphs are formatted for immediate statistical analysis. By ensuring compliance with the expected batch file format and automating result aggregation, FastAnalyzr BE significantly reduces formatting and transcription errors, as well as overall analysis time.
-In summary, FastAnalyzr BE simplifies the analysis of base editing data by automating key steps—batch file creation, CRISPResso2 execution, result interpretation, and visualization—enhancing efficiency, scalability, and reliability of CRISPResso2-based workflows.
+Base editing technologies have transformed gene therapy by enabling precise correction of single-nucleotide mutations without inducing double-strand DNA breaks. Cytosine and adenine base editors (CBEs and ABEs) allow targeted conversions of C•G→T•A and A•T→G•C, respectively. Base editing outcomes are typically assessed by next-generation sequencing (NGS) of PCR amplicons, known as amplicon sequencing. This method provides single-nucleotide resolution, supports high-throughput analysis of multiple targets, and is considered the gold standard for validating genome editing experiments.
+Among post-NGS analysis software, CRISPResso2 (https://github.com/pinellolab/CRISPResso2) is widely used. It integrates quality filtering, alignment, report generation, and quantification of editing outcomes, including indels and base editing efficiencies. However, its batch mode requires a strictly formatted input file and produces numerous output files (HTML reports, alignment tables, frequency matrices), making data preparation and consolidation time-consuming and error-prone.
+To address these challenges, we developed FastAnalyzr BE, an automated tool for quantifying base editing efficiencies and indel frequencies. Distributed as a Bash script with R-based processing, it installs via Conda and runs on Linux and macOS. FastAnalyzr BE operates in three steps:
+1) Batch file creation – An HTML template guides users to fill required fields with validation to prevent formatting errors, exporting a tab-delimited .txt file.
+2) Analysis with CRISPResso2 – Validated batch files are processed automatically, generating the necessary outputs.
+3) Result compilation & visualization – An R script aggregates outputs into unified summary tables, Excel files, and visualizations (heatmaps, haplotype analysis if needed).
+The pipeline supports parallel processing of dozens of amplicons or samples, with outputs ready for statistical analysis. By ensuring format compliance and automating result aggregation, FastAnalyzr BE reduces errors, saves time, and enhances the scalability and reliability of CRISPResso2-based workflows.
+
+#Requirements
+Conda – https://docs.conda.io/en/latest/miniconda.html
+Google Chrome – https://www.google.com/chrome/
+Note for WSL users: Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl
 
 # Installation
 The way to install FastAnalyzr BE is via conda, follow these steps to installation:
 
-1. Clone the repository
 ```
+# 1. Clone the repository
 git clone https://github.com/PROADI-TIAF/Fast-Analyzr-BE.git
 cd Fast-Analyzr-BE
-```
 
-2. Make the script executable
-```
+# 2. Make the script executable
 chmod +x Fast_Analyzr_BE.sh
-```
 
-3. Move script to global PATH (requires sudo)
-```
+# 3. Move script to global PATH (requires sudo)
 sudo mv Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
-```
 
-4. Create and activate the Conda environment
-```
+# 4. Create and activate the Conda environment
 conda env create -f Fast_Analyzr_BE.yml
 conda activate Fast_Analyzr_BE
-```
 
-5. Check that the script works
-```
+# 5. Check that the script works
 Fast_Analyzr_BE -h
 ```
 
 # Usage
 After installing FastAnalyzr BE, follow these steps to run an analysis:
 
+```
 1. Go to your analysis folder
-```
 cd /path/to/your/analysis_folder
-```
 
-2. Run the program
-```
+# 2. Run the program
 Fast_Analyzr_BE
-```
 
-3. Use menu options (optional)
-Fast_Analyzr_BE -n      # Do not open the HTML file and create the Batch file
-Fast_Analyzr_BE -s      # Skip Batch file creation and CRISPResso2 execution
-Fast_Analyzr_BE -c      # Run CRISPResso2 for a specific key/value pair
-
-You can view all options at any time by running:
-```
+# 3. Use menu options (optional)
+#Fast_Analyzr_BE -n      # Do not open the HTML file and create the Batch file
+#Fast_Analyzr_BE -s      # Skip Batch file creation and CRISPResso2 execution
+#Fast_Analyzr_BE -c      # Run CRISPResso2 for a specific key/value pair
+# You can view all options at any time by running:
 Fast_Analyzr_BE -h
 ```
 
-5. Completion message
+Completion message
 If everything runs correctly, you will see the following ASCII art indicating the analysis has completed successfully:
-```
                            _    _                                                     _    _
                           (_\__/(,_                                                  (_\__/(,_
                           | \  _////-._                                             | \  _////-._
@@ -78,4 +82,3 @@ If everything runs correctly, you will see the following ASCII art indicating th
           '-'-'-''''''''                                            '-'-'-''''''''
 
 Analysis completed!
-```
