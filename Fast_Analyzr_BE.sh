@@ -79,7 +79,9 @@ display_help() {
     echo -e "${NC}                                                      base_editor_output," 
     echo -e "${NC}                                                      conversion_nuc_from <A,T,C,G>,"
     echo -e "${NC}                                                      conversion_nuc_to <A,T,C,G>,"
-    echo -e "${NC}                                                      n_processes <Number of processes. Can be set to 'max'>.${NC}" 
+    echo -e "${NC}                                                      n_processes <Number of processes. Can be set to 'max'>.${NC}"
+    echo -e "${NC}  -ha, --haplotypes                   Runs haplotype analysis on metadata files.${NC}"
+ 
     echo ""
 }
 
@@ -93,9 +95,11 @@ txt_files_found=""
 open_html=true
 run_crispresso=true
 
+
 # Control flags to detect mutual exclusion
 no_batch_invoked=false
 skip_batch_invoked=false
+run_haplotypes=false
 
 # Array to store custom arguments
 custom_opts=()
@@ -106,6 +110,10 @@ while [ $# -gt 0 ]; do
         -h|--help)
             display_help
             exit 0
+            ;;
+        -ha|--haplotypes)
+            run_haplotypes=true
+            shift
             ;;
         -n|--no-batch)
             # mark that -n was used and bypass HTML creation
@@ -195,6 +203,9 @@ if $no_batch_invoked && $skip_batch_invoked; then
     echo -e "${RED}Error: Options -n/--no-batch and -s/--skip-batch-crispresso are mutually exclusive.${NC}"
     exit 1
 fi
+
+
+
 
 # Initial search for .txt files
 found_txt_files=()
@@ -905,7 +916,6 @@ open_html_file
 fi
 
 # Column + value validation (accumulate errors and exit at the end)
-# Initialize an error counter for column-related issues.
 declare -i COLUMN_ERROR=0
 
 # Define the list of required columns.
@@ -927,21 +937,24 @@ declare -A regexes=(
     [BE]='^(ABE|CBE)$'
 )
 
-# Columns that must have the same value across all rows.
-# These values will be validated for repetition.
+# Columns that must have the same value across all rows (within the same file).
 REQUIRED_REPEATED_COLUMNS=(
     a an g gn DNA_F_or_R BE
 )
+
+# Associative map to track gn across ALL files:
+# gn_global_map["<gn>"]="<DNA_F_or_R>|<BE>|<file>|<line>"
+declare -A gn_global_map=()
 
 # Loop through each found text file to perform validation.
 for file in "${found_txt_files[@]}"; do
     echo -e "${NC}Checking file: $(basename "$file")...${NC}"
     
-    # Read the header line from the current file.
-    header=$(head -n 1 "$file")
+    # Read the header line from the current file and strip CRLF if exists.
+    header=$(head -n 1 "$file" | tr -d '\r')
     # Split the header into an array of column names using tab as a delimiter.
     IFS=$'\t' read -ra columns <<< "$header"
-    unset IFS # Unset IFS to revert to default behavior
+    unset IFS
 
     # Header validation: determine missing and invalid columns
     missing=() # Array to store missing required columns
@@ -949,15 +962,15 @@ for file in "${found_txt_files[@]}"; do
 
     # Check for missing required columns.
     for req in "${REQUIRED_COLUMNS[@]}"; do
-        if [[ ! " ${columns[@]} " =~ " ${req} " ]]; then
-            missing+=("$req") # Add to missing list if not found
+        if [[ ! " ${columns[*]} " =~ " ${req} " ]]; then
+            missing+=("$req")
         fi
     done
 
     # Check for invalid/unexpected columns in the file's header.
     for col in "${columns[@]}"; do
         if [[ ! " ${REQUIRED_COLUMNS[*]} " =~ " ${col} " ]]; then
-            invalid+=("$col") # Add to invalid list if not a required column
+            invalid+=("$col")
         fi
     done
 
@@ -984,13 +997,18 @@ for file in "${found_txt_files[@]}"; do
         declare -i is_first_data_row=1 # Flag to identify the first data row
 
         LINE_NUM=1 # Initialize line number, starting after the header
-        # Read the file line by line, skipping the header (tail -n +2).
+        # Read the file line by line, skipping the header (tail -n +2), strip CRLF
         while IFS=$'\t' read -ra values; do
-            LINE_NUM=$((LINE_NUM+1)) # Increment line number for current row
+            LINE_NUM=$((LINE_NUM+1))
 
             # --- Individual cell value validation (using regex) ---
             for req in "${REQUIRED_COLUMNS[@]}"; do
-                val="${values[${col_idx[$req]}]}" # Get the value for the current required column
+                # ensure index exists
+                idx="${col_idx[$req]}"
+                val=""
+                if [[ -n "${idx:-}" ]]; then
+                    val="${values[$idx]}"
+                fi
 
                 regex="${regexes[$req]}"
                 if ! [[ $val =~ $regex ]]; then
@@ -999,23 +1017,50 @@ for file in "${found_txt_files[@]}"; do
                 fi
             done
 
-            # Repetition validation for specific columns
+            # Repetition validation for specific columns (within same file)
             for rep_col in "${REQUIRED_REPEATED_COLUMNS[@]}"; do
                 current_val="${values[${col_idx[$rep_col]}]}"
 
                 if (( is_first_data_row == 1 )); then
-                    # If this is the first data row, store its values as the reference.
                     first_row_values["$rep_col"]="$current_val"
                 else
-                    # For subsequent rows, compare with the stored first row value.
                     if [[ "${first_row_values[$rep_col]}" != "$current_val" ]]; then
                         echo -e "${RED}Error in $(basename "$file"), line $LINE_NUM, col '$rep_col': Value '$current_val' must match the first row's value '${first_row_values[$rep_col]}'${NC}"
                         ((COLUMN_ERROR++))
                     fi
                 fi
             done
-            is_first_data_row=0 # After processing the first data row, set the flag to 0.
-        done < <(tail -n +2 "$file") # Process file content starting from the second line
+
+            # New repeat
+            gn_val="${values[${col_idx[gn]}]}"
+            dna_val="${values[${col_idx[DNA_F_or_R]}]}"
+            be_val="${values[${col_idx[BE]}]}"
+
+            # Only check if gn is non-empty (regex validation above already flags invalid gn)
+            if [[ -n "$gn_val" ]]; then
+                combo="${dna_val}|${be_val}"
+                if [[ -v "gn_global_map[$gn_val]" ]]; then
+                    # get stored combo and location
+                    stored="${gn_global_map[$gn_val]}"
+                    stored_combo="${stored%%|*}"         # this extracts <DNA_F_or_R> (but combo stored slightly different below, so parse robustly)
+                    # stored has format "<DNA_F_or_R>|<BE>|<file>|<line>"
+                    # Extract first two fields:
+                    IFS='|' read -r stored_dna stored_be stored_file stored_line <<< "$stored"
+                    stored_combo="${stored_dna}|${stored_be}"
+                    if [[ "$stored_combo" != "$combo" ]]; then
+                        echo -e "${RED}Error: guide name ' ${gn_val} ' conflict across files.${NC}"
+                        echo -e "${RED}  First seen: ${stored_file}, line ${stored_line} -> ${stored_combo}${NC}"
+                        echo -e "${RED}  Now found:  $(basename "$file"), line ${LINE_NUM} -> ${combo}${NC}"
+                        ((COLUMN_ERROR++))
+                    fi
+                else
+                    # store combo + file + line for this gn
+                    gn_global_map["$gn_val"]="${dna_val}|${be_val}|$(basename "$file")|${LINE_NUM}"
+                fi
+            fi
+
+            is_first_data_row=0
+        done < <(tail -n +2 "$file" | tr -d '\r')
     fi
 done
 
@@ -1024,7 +1069,7 @@ if (( COLUMN_ERROR )); then
     echo -e "${RED}Validation failed (${COLUMN_ERROR} error(s)).${NC}"
     exit 1
 else
-    echo -e "${NC}All .txt files passed header and value validation.${NC}"
+    echo -e "${NC}All .txt files passed header and value validation (including global gn consistency).${NC}"
 fi
 
 ########## Step 2: Execution of CRISPResso2 ##########
@@ -2041,7 +2086,7 @@ for (file_txt in files_txt) {
                            })
                          }) +
         guides(fill = guide_colorbar(
-          title = "A-to-G (%)",
+          title = "Edition (%)",
           barwidth = 1,
           barheight = 12,
           frame.colour = "black",
@@ -2183,7 +2228,7 @@ for (file_txt in files_txt) {
           }
         ) +
         guides(fill = guide_colorbar(
-          title = "A-to-G (%)",
+          title = "Edition (%)",
           barwidth = 1,
           barheight = 5,
           frame.colour = "black",
@@ -2453,8 +2498,10 @@ description <- paste(
   "",
   "Any deviation from the expected outputs described above may indicate an error in script execution. Please carefully review these instructions.",
   "",
+  "If the haplotypes function is activated, after the completion of the editing analyses all detected gRNA sequences will be listed, and you will be asked to provide the desired positions to analyze. After that, for each Batch file a haplotypes.xlsx file will be generated containing the different possible haplotypes for the specified positions, and a haplotypes_stacked_bar.png file will be created to visualize these results. Haplotypes with a frequency lower than 1% will not be reported in the chart legend and will be grouped as Other Haplotypes to facilitate visualization.",
+  "",
   "Enjoy analyzing your results!",
-  sep="\n"
+  sep = "\n"
 )
 
 # Define the output file path
@@ -2563,18 +2610,650 @@ R -e "knitr::opts_knit\$set(root.dir = '$current_dir'); rmarkdown::render('$curr
 R_EXIT_CODE=$?
 
 # Clean up by removing the temporary Rmd file and HTML file (do not overwrite the exit code)
-rm "$current_dir/temp_script.Rmd"
-rm "$current_dir/html_file.html"
+rm "$current_dir/temp_script.Rmd" 2>/dev/null
+rm "$current_dir/html_file.html" 2>/dev/null
 
 # Check the exit code of the R command
 if [ $R_EXIT_CODE -eq 0 ]; then
     display_footer
     echo ""
-    echo -e "${NC}Analysis completed!${NC}"
+    echo -e "${NC}Base editing and indel calculation completed!${NC}"
     echo ""
 else
     echo ""
     echo ""
-    echo -e "${RED}Analysis failed.${NC}"
+    echo -e "${RED}Base editing and indel calculation failed.${NC}"
     echo ""
+fi
+
+###Running haplotypes analysis###
+
+run_haplotypes_analysis() {
+
+# -----------------------------------------------------------------------------
+# 1) Scan all *.txt metadata files in the current directory
+# -----------------------------------------------------------------------------
+METAFILES=(./*.txt)
+if [ ${#METAFILES[@]} -eq 0 ]; then
+  echo "No .txt metadata files found."
+  exit 1
+fi
+
+declare -A GUIDE_SEQ   # GN -> guide sequence
+
+# -----------------------------------------------------------------------------
+# 2) For each metadata file, extract unique (gn, g) pairs
+# -----------------------------------------------------------------------------
+for MF in "${METAFILES[@]}"; do
+  # read header and identify indices of g and gn
+  IFS=$'\t' read -r -a HEADERS < <(head -n1 "$MF")
+  unset GIDX GNIDX
+  for idx in "${!HEADERS[@]}"; do
+    case "${HEADERS[$idx]}" in
+      g)  GIDX=$idx ;;
+      gn) GNIDX=$idx ;;
+    esac
+  done
+
+  # ensure both columns were found
+  if [ -z "${GIDX+x}" ] || [ -z "${GNIDX+x}" ]; then
+    echo "Error: 'g' and/or 'gn' columns not found in header of $MF"
+    exit 1
+  fi
+
+  # use process substitution to populate GUIDE_SEQ in the parent shell
+  while IFS=$'\t' read -r GN G; do
+    GUIDE_SEQ["$GN"]="$G"
+  done < <(
+    tail -n +2 "$MF" \
+    | awk -v gcol=$((GIDX+1)) -v gncol=$((GNIDX+1)) -F'\t' '{ print $gncol"\t"$gcol }' \
+    | sort -u
+  )
+done
+
+# abort if nothing was extracted
+if [ ${#GUIDE_SEQ[@]} -eq 0 ]; then
+  echo "No (gn, g) pairs extracted from metadata."
+  exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# 3) Interactive: ask for positions for each guide
+# -----------------------------------------------------------------------------
+declare -A GUIDE_POS
+echo ""
+echo " Starting haplotype analysis based on the provided metadata files..."
+echo ""
+echo " Detected guide sequences:"
+echo ""
+
+i=1
+for GN in "${!GUIDE_SEQ[@]}"; do
+  echo "  [$i] $GN  (seq: ${GUIDE_SEQ[$GN]})"
+  ((i++))
+done
+echo
+echo "Please enter the desired positions (comma-separated) for each guide:"
+echo
+
+for GN in "${!GUIDE_SEQ[@]}"; do
+  read -rp "  Positions for '$GN' (${GUIDE_SEQ[$GN]}): " POS
+  POS_CLEAN=$(echo "$POS" | tr -d ' ' | sed 's/,/, /g')
+  GUIDE_POS["$GN"]="$POS_CLEAN"
+done
+
+# -----------------------------------------------------------------------------
+# 4) Generate pos_list_input.R
+# -----------------------------------------------------------------------------
+POS_R="pos_list_input.R"
+cat > "$POS_R" <<EOF
+# Automatically generated by run_haplotypes.sh
+pos_list <- list(
+EOF
+
+for GN in "${!GUIDE_POS[@]}"; do
+  echo "  \"$GN\" = c(${GUIDE_POS[$GN]})," >> "$POS_R"
+done
+
+# remove the trailing comma on the last line
+sed -i '$ s/,$//' "$POS_R"
+
+cat >> "$POS_R" <<EOF
+)
+EOF
+
+echo
+echo
+
+# -----------------------------------------------------------------------------
+# 5) Generate pipeline.Rmd with setup and the full original R pipeline
+# -----------------------------------------------------------------------------
+RMD="pipeline.Rmd"
+cat > "$RMD" <<'EOF'
+---
+title: "Haplotype Pipeline"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=FALSE)
+library(Biostrings)
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(openxlsx)
+library(ggplot2)
+library(tools)
+library(scales)
+library(ggtext)
+library(stringr)
+library(RColorBrewer)
+
+# load positions defined via Bash
+if (!file.exists("pos_list_input.R")) {
+  stop("pos_list_input.R not found. Run run_haplotypes.sh first.")
+}
+source("pos_list_input.R")
+
+# Dependencies and directories
+default_dir <- "."
+final_dir   <- file.path(default_dir, "Final_result")
+if (!dir.exists(final_dir)) dir.create(final_dir)
+
+# Find all allele frequency files
+allele_files <- list.files(
+  path       = default_dir,
+  pattern    = "\\.Alleles_frequency_table_around_.*\\.txt$",
+  full.names = TRUE,
+  recursive  = TRUE
+)
+
+# Group by batch directory
+batch_map <- split(allele_files, dirname(dirname(allele_files)))
+
+# helper: safe trim (same logic used antes)
+trim_seq <- function(x) {
+  # preserve NA
+  x_na <- is.na(x)
+  res <- as.character(x)
+  # if length > 20 do substr(11, nchar-10) else return as-is
+  keep <- !x_na & nchar(res) > 20
+  res[keep] <- substr(res[keep], 11, nchar(res[keep]) - 10)
+  res[x_na] <- NA_character_
+  return(res)
+}
+
+# PART 1: validations and Excel generation for haplotypes
+for (batch_dir in names(batch_map)) {
+  batch_name  <- basename(batch_dir)
+  batch_short <- sub("^CRISPRessoBatch_on_", "", batch_name)
+
+  # Read metadata
+  meta_file <- file.path(default_dir, paste0(batch_short, ".txt"))
+  if (!file.exists(meta_file)) stop("Metadata TXT not found: ", meta_file)
+  df_meta <- read.delim(meta_file, stringsAsFactors = FALSE, check.names = FALSE)
+
+  # Validate metadata columns
+  required_cols <- c("n", "g", "BE", "DNA_F_or_R")
+  if (!all(required_cols %in% names(df_meta))) {
+    stop("Metadata must contain columns: ", paste(required_cols, collapse = ", "))
+  }
+
+  # Extract BE type and orientation (constant within batch)
+  be_type <- df_meta$BE[1]
+  orient  <- df_meta$DNA_F_or_R[1]
+  if (!be_type %in% c("ABE", "CBE")) stop("Invalid BE: ", be_type)
+  if (!orient  %in% c("F", "R"))    stop("Invalid orientation: ", orient)
+  alleles       <- if (be_type == "ABE") c("A", "G") else c("C", "T")
+  expected_base <- if (be_type == "ABE") "A" else "C"
+
+  # Initial checks for each sample
+  for (f in batch_map[[batch_dir]]) {
+    sample     <- sub("^CRISPResso_on_", "", basename(dirname(f)))
+    meta_sample <- df_meta %>% filter(n == sample)
+    if (nrow(meta_sample) != 1) {
+      stop("Sample '", sample, "' not found or duplicated in metadata.")
+    }
+    guide_seq <- meta_sample$g
+    guide      <- sub(".*Alleles_frequency_table_around_(.*)\\.txt$", "\\1", basename(f))
+    if (!guide %in% names(pos_list)) {
+      stop("Guide '", guide, "' not found in pos_list.")
+    }
+    positions <- pos_list[[guide]]
+
+    # 1) positions must be positive integers
+    if (any(positions <= 0) || any(positions != floor(positions))) {
+      stop("Positions must be positive integers: ", paste(positions, collapse = ", "))
+    }
+    # 2) position cannot exceed guide length
+    if (max(positions) > nchar(guide_seq)) {
+      stop(sprintf(
+        "Position %d exceeds guide length (%d)",
+        max(positions), nchar(guide_seq)
+      ))
+    }
+    # 3) check expected base at each position (on the guide_seq from metadata)
+    for (p in positions) {
+      if (substr(guide_seq, p, p) != expected_base) {
+        stop(sprintf(
+          "Sample '%s': position %d is '%s', expected '%s' for %s.",
+          sample, p, substr(guide_seq, p, p), expected_base, be_type
+        ))
+      }
+    }
+  }
+
+  # If all checks pass, process the batch
+  out_list <- list()
+  for (f in batch_map[[batch_dir]]) {
+    sample <- sub("^CRISPResso_on_", "", basename(dirname(f)))
+    df_raw <- read.delim(f, stringsAsFactors = FALSE, check.names = FALSE)
+    guide <- sub(".*Alleles_frequency_table_around_(.*)\\.txt$", "\\1", basename(f))
+    positions <- pos_list[[guide]]
+
+    # Ensure columns exist (some CRISPResso outputs may vary)
+    # We'll try to use: Aligned_Sequence, Reference_Sequence (optional), n_inserted (optional), Unedited, #Reads, %Reads
+    if (!"Aligned_Sequence" %in% names(df_raw)) stop("Aligned_Sequence column not found in file: ", f)
+    if (!"#Reads" %in% names(df_raw)) stop("#Reads column not found in file: ", f)
+    if (!"%Reads" %in% names(df_raw)) stop("%Reads column not found in file: ", f)
+    if (!"Unedited" %in% names(df_raw)) {
+      # If Unedited missing, create default NA to avoid errors
+      df_raw$Unedited <- NA
+    }
+    # If n_inserted absent, create 0
+    if (!"n_inserted" %in% names(df_raw)) df_raw$n_inserted <- 0
+    # If Reference_Sequence absent, create NA
+    if (!"Reference_Sequence" %in% names(df_raw)) df_raw$Reference_Sequence <- NA
+
+    # Prepare sequences: apply orientation and trim in both Aligned_Sequence and Reference_Sequence
+    df_proc <- df_raw %>%
+      mutate(
+        Aligned_Sequence = as.character(Aligned_Sequence),
+        Reference_Sequence = as.character(Reference_Sequence)
+      )
+
+    # apply reverse complement if orientation is R (for both sequences)
+    if (orient == "R") {
+      # handle NA gracefully
+      df_proc$Aligned_Sequence <- as.character(
+        ifelse(!is.na(df_proc$Aligned_Sequence),
+               as.character(reverseComplement(DNAStringSet(df_proc$Aligned_Sequence))),
+               NA_character_)
+      )
+      df_proc$Reference_Sequence <- as.character(
+        ifelse(!is.na(df_proc$Reference_Sequence),
+               as.character(reverseComplement(DNAStringSet(df_proc$Reference_Sequence))),
+               NA_character_)
+      )
+    }
+
+    # Trim sequences (same window as before: remove first 10 and last 10 after we reversed if needed)
+    df_proc$Aligned_Sequence <- trim_seq(df_proc$Aligned_Sequence)
+    df_proc$Reference_Sequence <- trim_seq(df_proc$Reference_Sequence)
+
+    # Decide which sequence to use per-row:
+    # If n_inserted > 0 AND Reference_Sequence is available (not NA), use Reference_Sequence.
+    # Otherwise use Aligned_Sequence.
+    df_proc <- df_proc %>%
+      mutate(
+        seq_used = ifelse(!is.na(n_inserted) & n_inserted > 0 & !is.na(Reference_Sequence) & Reference_Sequence != "",
+                          Reference_Sequence,
+                          Aligned_Sequence)
+      )
+
+    # Group identical reads by seq_used and Unedited (so identical sequences collapse), sum reads
+    df_final <- df_proc %>%
+      group_by(seq_used, Unedited) %>%
+      summarise(
+        `#Reads` = sum(`#Reads`, na.rm = TRUE),
+        `%Reads` = sum(`%Reads`, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      rename(Aligned_Sequence = seq_used) # keep downstream names similar to prior code
+
+    # Generate possible haplotypes grid (same as before)
+    haps_grid <- expand.grid(
+      rep(list(alleles), length(positions)), stringsAsFactors = FALSE
+    ) %>%
+      setNames(paste0("p", positions)) %>%
+      mutate(hap = apply(., 1, function(x) paste0(x, positions, collapse = "")))
+
+    # Compute observed haplotypes:
+    # For each row, extract bases at 'positions' from Aligned_Sequence (which holds seq_used now).
+    # If any selected position is '-', classify as 'others'.
+    extract_bases_with_dash <- function(seq, pos) {
+      # returns a character vector of bases at positions, handling NA or short seq
+      if (is.na(seq)) return(NA_character_)
+      sapply(pos, function(p) {
+        if (p > nchar(seq) || p < 1) return(NA_character_)
+        substr(seq, p, p)
+      }, USE.NAMES = FALSE)
+    }
+
+    df_hap_obs <- df_final %>%
+      rowwise() %>%
+      mutate(
+        bases = list(extract_bases_with_dash(Aligned_Sequence, positions)),
+        any_dash = any(unlist(bases) == "-", na.rm = FALSE),
+        # If any_dash TRUE -> assign 'others'. Else build hap as base+position concatenation to match haps_grid.
+        hap = if (isTRUE(any_dash) || any(is.na(unlist(bases)))) {
+          "others"
+        } else {
+          paste0(unlist(bases), positions, collapse = "")
+        }
+      ) %>%
+      ungroup() %>%
+      group_by(hap) %>%
+      summarise(percent = round(sum(`%Reads`, na.rm = TRUE), 2), .groups = "drop")
+
+    # Merge known haplotypes and calculate "others" (including any hap not in the known grid)
+    df_known <- haps_grid %>%
+      select(hap) %>%
+      left_join(df_hap_obs %>% filter(hap %in% haps_grid$hap), by = "hap") %>%
+      replace_na(list(percent = 0))
+
+    others_pct <- 0
+    if (nrow(df_hap_obs)) {
+      others_pct <- sum(
+        df_hap_obs$percent[
+          df_hap_obs$hap == "others" | !(df_hap_obs$hap %in% haps_grid$hap)
+        ],
+        na.rm = TRUE
+      )
+    }
+
+    df_hap_final <- bind_rows(
+      df_known,
+      tibble(hap = "others", percent = round(others_pct, 2))
+    )
+
+    # Pivot to wide format and add metadata (Total Reads from df_final)
+    df_wide <- df_hap_final %>%
+      pivot_wider(names_from = hap, values_from = percent) %>%
+      mutate(`Total Reads` = sum(df_final$`#Reads`, na.rm = TRUE), .before = 1) %>%
+      mutate(Sample = sample, BE = be_type, Orientation = orient, .before = 1)
+
+    out_list[[sample]] <- df_wide
+  }
+
+  # Combine and reorder according to metadata
+  combined <- bind_rows(out_list) %>%
+    select(-BE, -Orientation) %>%
+    rename(
+      Samples             = Sample,
+      `Others haplotypes` = others
+    )
+  sample_order <- df_meta[["n"]]
+  # Keep only samples present in combined; match will put NA for missing so filter
+  combined <- combined[match(sample_order, combined$Samples), ]
+  combined <- combined[!is.na(combined$Samples), ]
+
+  # Create workbook and write data
+  wb <- createWorkbook()
+  addWorksheet(wb, sheetName = batch_short)
+  writeData(wb, batch_short, x = combined, withFilter = FALSE)
+
+  # Styling
+  headerStyle  <- createStyle(textDecoration = "bold")
+  decimalStyle <- createStyle(numFmt = "0.00")
+  integerStyle <- createStyle(numFmt = "0")
+  centerAll    <- createStyle(halign = "center", valign = "center")
+  addStyle(wb, batch_short, headerStyle, rows=1, cols=1:ncol(combined), gridExpand=TRUE)
+  borderStyle <- createStyle(border="bottom", borderStyle="thick", borderColour="black")
+  addStyle(wb, batch_short, borderStyle, rows=1, cols=1:ncol(combined), gridExpand=TRUE, stack=TRUE)
+
+  num_cols <- which(sapply(combined, is.numeric))
+  int_col  <- which(names(combined)=="Total Reads")
+  dec_cols <- setdiff(num_cols, int_col)
+  if (length(dec_cols)) addStyle(wb,batch_short,decimalStyle, rows=2:(nrow(combined)+1), cols=dec_cols, gridExpand=TRUE)
+  if (length(int_col)) addStyle(wb,batch_short,integerStyle, rows=2:(nrow(combined)+1), cols=int_col, gridExpand=TRUE)
+
+  all_cols <- seq_len(ncol(combined))
+  hap_cols <- setdiff(all_cols, which(names(combined) %in% c("Samples","Total Reads","Others haplotypes")))
+  setColWidths(wb,batch_short,cols=all_cols, widths="auto")
+  setColWidths(wb,batch_short,cols=hap_cols, widths=10)
+  addStyle(wb,batch_short,centerAll, rows=1:(nrow(combined)+1), cols=all_cols, gridExpand=TRUE, stack=TRUE)
+
+  out_file <- file.path(final_dir, paste0(batch_short, "_haplotypes.xlsx"))
+  saveWorkbook(wb, file=out_file, overwrite=TRUE)
+  message("Generated: ", out_file)
+}
+# → PART 3: move the haplotype files into their folders
+hap_files <- list.files(
+  path       = final_dir,
+  pattern    = "_haplotypes\\.xlsx$",
+  full.names = TRUE
+)
+for (f in hap_files) {
+  fn       <- basename(f)
+  batch_id <- sub("_haplotypes\\.xlsx$", "", fn)
+  dest_dir <- file.path(final_dir, batch_id)
+  if (!dir.exists(dest_dir)) dir.create(dest_dir)
+  file.rename(from = f, to = file.path(dest_dir, fn))
+}
+
+message("All _haplotypes.xlsx files have been relocated to their folders.")
+
+# PART 2: generate stacked-bar plots (split into several if >50 samples; no % labels)
+
+# 1) load packages
+library(openxlsx)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tools)
+library(scales)
+library(ggtext)
+library(stringr)
+library(RColorBrewer)
+
+# 2) define main directory and locate files
+final_dir  <- "Final_result"
+xlsx_files <- list.files(
+  path       = final_dir,
+  pattern    = "_haplotypes\\.xlsx$",
+  recursive  = TRUE,
+  full.names = TRUE
+)
+if (length(xlsx_files) == 0) {
+  stop("No *_haplotypes.xlsx found in ", final_dir)
+}
+message("Found ", length(xlsx_files), " files.")
+
+# 3) function to style haplotype labels in HTML
+style_haplotype <- function(h) {
+  h <- gsub("([GT])", "<span style='color:red'>\\1</span>", h)
+  h <- gsub("([0-9]+)", "<sub>\\1</sub>", h)
+  h
+}
+
+# 4) function to order haplotypes (A/C first, G/T later, Other last)
+order_haplotypes <- function(haplotypes) {
+  # remove suffixes and spaces
+  base_names <- gsub(" ", "", gsub("\\..*", "", haplotypes))
+  # compute “weight”: (G/T) – (A/C)
+  weights <- sapply(base_names, function(x) {
+    if (tolower(x) == "otherhaplotypes") return(Inf)
+    str_count(x, "[GgTt]") - str_count(x, "[AaCc]")
+  })
+  # order
+  haplotypes[order(weights, haplotypes)]
+}
+
+# 5) main loop over each .xlsx
+for (fn in xlsx_files) {
+  message("\nProcessing: ", fn)
+  folder    <- dirname(fn)
+  base_name <- tools::file_path_sans_ext(basename(fn))
+  
+  # a) read data
+  df <- read.xlsx(fn, detectDates = FALSE)
+  names(df) <- trimws(names(df))
+  hap_cols <- setdiff(names(df), c("Samples", "Total.Reads"))
+  df[hap_cols] <- lapply(df[hap_cols], function(x) {
+    as.numeric(gsub(",", ".", x))
+  })
+  df$Samples <- factor(df$Samples, levels = unique(df$Samples))
+  
+  # b) reshape to "long" format
+  df_long <- df %>%
+    pivot_longer(
+      cols      = all_of(hap_cols),
+      names_to  = "Haplotype",
+      values_to = "Percent"
+    ) %>%
+    filter(!is.na(Percent), Percent >= 0) %>%
+    mutate(
+      Haplotype = if_else(
+        Haplotype == "Others.haplotypes",
+        "Other haplotypes",
+        Haplotype
+      )
+    )
+  
+  # c) group haplotypes with max <1% into "Other haplotypes"
+  low_haps <- df_long %>%
+    group_by(Haplotype) %>%
+    summarise(max_pct = max(Percent), .groups = "drop") %>%
+    filter(max_pct < 1) %>%
+    pull(Haplotype)
+  
+  df_long <- df_long %>%
+    mutate(
+      Haplotype = if_else(
+        Haplotype %in% low_haps,
+        "Other haplotypes",
+        Haplotype
+      )
+    ) %>%
+    group_by(Samples, Haplotype) %>%
+    summarise(Percent = sum(Percent), .groups = "drop")
+  
+  # d) order and format labels
+  haplo_orig      <- unique(df_long$Haplotype)
+  haplo_ordered   <- order_haplotypes(haplo_orig)
+  haplo_formatted <- sapply(haplo_ordered, style_haplotype)
+  
+  df_long <- df_long %>%
+    mutate(Haplotype = factor(Haplotype, levels = haplo_ordered))
+  levels(df_long$Haplotype) <- haplo_formatted
+  
+  # e) build color palette:
+  #    - blues for real haplotypes
+  #    - gray for "Other haplotypes"
+  other_idx <- which(haplo_ordered == "Other haplotypes")
+  real_idx  <- setdiff(seq_along(haplo_ordered), other_idx)
+  pal_real  <- colorRampPalette(brewer.pal(9, "Blues"))(length(real_idx))
+  custom_pal <- rep("gray60", length(haplo_ordered))
+  custom_pal[real_idx] <- pal_real
+  
+  # f) split into blocks of up to 50 samples
+  sample_lvls <- levels(df_long$Samples)
+  n_samples   <- length(sample_lvls)
+  
+  if (n_samples <= 50) {
+    blocks    <- 1
+    block_idx <- rep(1, n_samples)
+  } else {
+    blocks    <- ceiling(n_samples / 50)
+    block_idx <- cut(
+      seq_along(sample_lvls),
+      breaks = blocks,
+      labels = FALSE
+    )
+  }
+  
+  # g) generate and save one plot per block
+  for (b in seq_len(blocks)) {
+    these <- sample_lvls[block_idx == b]
+    df_blk <- df_long %>%
+      filter(Samples %in% these) %>%
+      mutate(Samples = factor(Samples, levels = these))
+    
+    size_x <- round(pmax(8, pmin(10, 10 * (10 / length(these)))))
+    
+    p <- ggplot(df_blk, aes(x = Samples, y = Percent, fill = Haplotype)) +
+      geom_col(color = "black", size = 0.3) +
+      scale_y_continuous(labels = label_number(suffix = "%"), expand = c(0, 0)) +
+      coord_cartesian(ylim = c(0, 100)) +
+      scale_fill_manual(values = custom_pal) +
+      theme_minimal(base_size = 12) +
+      theme(
+        axis.line        = element_line(color = "black"),
+        axis.ticks       = element_line(color = "black"),
+        panel.grid.major = element_blank(),
+        panel.background = element_rect(fill = "white", color = NA),
+        plot.background  = element_rect(fill = "white", color = NA),
+        axis.text.x      = element_text(
+                              angle = 45, 
+                              hjust = 1,
+                              size  = size_x,
+                              colour = "black"
+                            ),
+        axis.text.y      = element_text(size = 12, colour = "black"),
+        legend.position  = "right",
+        legend.text      = element_markdown()
+      ) +
+      labs(
+        title = paste0(base_name, " (figure ", b, "/", blocks, ")"),
+        y     = "Reads (%)",
+        x     = NULL
+      )
+    
+    suffix <- if (blocks == 1) "" else paste0("_part", b)
+    fname  <- paste0(base_name, "_stacked_bar", suffix, ".png")
+    
+    ggsave(
+      filename = fname,
+      plot     = p,
+      path     = folder,
+      width    = max(6, length(these) * 0.5),
+      height   = 5,
+      dpi      = 600,
+      bg       = "white"
+    )
+    
+    fullpath <- file.path(folder, fname)
+    if (file.exists(fullpath)) {
+      message("Saved: ", fullpath)
+    } else {
+      warning("Failed to save: ", fullpath)
+    }
+  }
+}
+
+message("All stacked-bar plots were successfully generated.")
+EOF
+
+echo 
+ 
+RMD="pipeline.Rmd"
+
+echo "Rscript -e \"rmarkdown::render('$RMD', quiet=TRUE)\""
+Rscript -e "rmarkdown::render('$RMD', quiet=TRUE)"
+
+R_EXIT_CODE=$?
+
+check_r_exit_code $R_EXIT_CODE
+
+rm -f pos_list_input.R pipeline.Rmd pipeline.html 2>/dev/null
+}
+
+check_r_exit_code() {
+    local R_EXIT_CODE=$1  
+    if [ "$R_EXIT_CODE" -eq 0 ]; then
+        display_footer
+        echo ""
+        echo -e "${NC}Haplotypes analysis completed!${NC}"
+        echo ""
+    else
+        echo ""
+        echo ""
+        echo -e "${RED}Haplotypes analysis failed.${NC}"
+        echo ""
+    fi
+}
+
+if $run_haplotypes; then
+    run_haplotypes_analysis
 fi
