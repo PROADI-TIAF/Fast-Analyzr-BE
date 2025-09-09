@@ -38,21 +38,30 @@ Note for WSL users: Google Chrome must be installed via terminal. Follow the ins
 The way to install FastAnalyzr BE is via conda, follow these steps:
 
 ```
-# 1. Clone the repository
+# 1. Create the Conda environment
+conda create -n Fast_Analyzr_BE \
+  -c conda-forge -c bioconda -c defaults \
+  crispresso2 \
+  r-base=4.3.0 r-essentials r-rmarkdown r-knitr \
+  r-dplyr r-tidyr r-readxl r-openxlsx \
+  bioconductor-biostrings \
+  r-ggplot2 r-scales r-ggtext r-stringr r-rcolorbrewer \
+  r-png
+
+# 2. Activate the Conda environment
+conda activate Fast_Analyzr_BE
+
+# 3. Clone the repository
 git clone https://github.com/PROADI-TIAF/Fast-Analyzr-BE.git
 cd Fast-Analyzr-BE
 
-# 2. Make the script executable
+# 4. Make the script executable
 chmod +x Fast_Analyzr_BE.sh
 
-# 3. Move script to global PATH (requires sudo)
+# 5. Move script to global PATH (requires sudo)
 sudo mv Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
 
-# 4. Create and activate the Conda environment
-conda env create -f Fast_Analyzr_BE.yml
-conda activate Fast_Analyzr_BE
-
-# 5. Check that the script works
+# 6. Check the script menu
 Fast_Analyzr_BE -h
 ```
 
