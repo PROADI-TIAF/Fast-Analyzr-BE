@@ -70,7 +70,7 @@ Fast_Analyzr_BE -h
 After installing FastAnalyzr BE, follow these steps to run an analysis:
 
 ```
-1. Go to your analysis folder
+# 1. Go to your analysis folder
 cd /path/to/your/analysis_folder
 
 # 2. Run the program
