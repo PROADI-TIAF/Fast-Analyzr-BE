@@ -204,9 +204,6 @@ if $no_batch_invoked && $skip_batch_invoked; then
     exit 1
 fi
 
-
-
-
 # Initial search for .txt files
 found_txt_files=()
 for file in "$current_dir"/*.txt; do
@@ -346,7 +343,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
     <button onclick="removeRows()">Remove Rows</button>
     <button id="saveButton" onclick="saveTXT()">Save Batch File as TXT</button>
     <button id="newFileButton">Create New Batch File</button>
-
     <div id="newFileModal" class="modal">
         <div class="modal-content">
             <p>Are you sure you want to create a new batch file?</p>
@@ -354,7 +350,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
             <button id="noButton" class="modal-button">No</button>
         </div>
     </div>
-
     <div style="margin-top: 30px;">
         <p style="font-size: 0.9em;"><b>CRISPRessoBatch Parameters:</b></p>
         <p style="font-size: 0.9em;">fastq_r1 = Fastq_r1 file name</p>
@@ -367,7 +362,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
         <p style="font-size: 0.9em;">DNA_F_or_R = Defines if the sgRNA was designed on the forward (F) or reverse (R) DNA strand</p>
         <p style="font-size: 0.9em;">BE = Base editor (ABE or CBE)</p>
     </div>
-
     <script>
         let undoStack = []; // Stores table states for undo functionality
         let selectionStart = null; // Keeps track of the start cell for range selection
@@ -380,7 +374,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 undo();
             }
         });
-
         // Saves the current state of the table to the undo stack
         function saveState() {
             const table = document.getElementById("dataTable");
@@ -396,7 +389,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
             }
             undoStack.push(state);
         }
-
         // Restores the previous state from the undo stack
         function undo() {
             if (undoStack.length > 1) {
@@ -413,7 +405,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 }
             }
         }
-
         // Creates a new table row with appropriate cells and event listeners
         function createRow(idx) {
             const tr = document.createElement("tr");
@@ -449,7 +440,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 });
                 tr.appendChild(td);
             });
-
             // Add dropdown for DNA_F_or_R
             const tdStr = document.createElement("td");
             const selStr = document.createElement("select");
@@ -467,7 +457,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
             selStr.addEventListener("keydown", cellKeydownHandler);
             tdStr.appendChild(selStr);
             tr.appendChild(tdStr);
-
             // Add dropdown for BE (Base Editor)
             const tdBE = document.createElement("td");
             const selBE = document.createElement("select");
@@ -487,7 +476,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
             tr.appendChild(tdBE);
             return tr;
         }
-
         // Autofills a specific column with a given value for all rows
         function autofillColumn(ci, val) {
             document.querySelectorAll("#dataTable tbody tr").forEach(r => {
@@ -499,7 +487,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 }
             });
         }
-
         // Handles cell click events for selection
         function cellClickHandler(e) {
             if (e.shiftKey && selectionStart) selectRange(selectionStart, e.currentTarget);
@@ -509,7 +496,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 selectionStart = e.currentTarget;
             }
         }
-
         // Selects a range of cells given a start and end cell
         function selectRange(s, e) {
             clearSelection();
@@ -528,18 +514,15 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 }
             }
         }
-
         // Clears all currently selected cells
         function clearSelection() {
             document.querySelectorAll("td.selected").forEach(td => td.classList.remove("selected"));
         }
-
         // Marks a single cell as selected
         function markSelected(c) {
             clearSelection();
             c.classList.add("selected");
         }
-
         // Handles keyboard navigation (arrows) within table cells
         function cellKeydownHandler(e) {
             let c = e.currentTarget.tagName === "TD" ? e.currentTarget : e.currentTarget.parentElement;
@@ -565,7 +548,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 }
             }
         }
-
         // Handles Ctrl+C (copy) functionality
         document.addEventListener("keydown", function(e) {
             if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
@@ -602,7 +584,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 }
             }
         });
-
         // Handles Delete key to clear selected cells
         document.addEventListener("keydown", function(e) {
             if (e.key === "Delete") {
@@ -616,7 +597,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 saveState();
             }
         });
-
         // Handles paste event (Ctrl+V)
         document.addEventListener("paste", function(e) {
             const tbl = document.getElementById("dataTable");
@@ -633,7 +613,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 e.preventDefault();
                 return;
             }
-
             if (copiedDataBlock) { // If data was copied from within the table
                 copiedDataBlock.forEach((row, i) => {
                     let tr = tbl.rows[sr + i];
@@ -670,7 +649,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 e.preventDefault();
             }
         });
-
         // Validates the content of the table cells against defined regex patterns
         function validateTable() {
             const regexes = {
@@ -719,7 +697,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
             }
             return true;
         }
-
         // Saves the table data as a tab-separated TXT file
         function saveTXT() {
             if (!validateTable()) return; // Validate before saving
@@ -764,7 +741,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
             link.click();
             document.body.removeChild(link);
         }
-
         // Event listener when the DOM is fully loaded
         window.addEventListener("DOMContentLoaded", () => {
             const tb = document.querySelector("#dataTable tbody");
@@ -780,7 +756,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
             newFileButton.addEventListener("click", () => {
                 newFileModal.style.display = "block";
             });
-
             // Handle 'Yes' for new file: clear table and add one row
             yesButton.addEventListener("click", () => {
                 const tb = document.querySelector("#dataTable tbody");
@@ -791,7 +766,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 saveState();
                 newFileModal.style.display = "none";
             });
-
             // Handle 'No' for new file: close modal
             noButton.addEventListener("click", () => {
                 newFileModal.style.display = "none";
@@ -804,7 +778,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 }
             });
         });
-
         // Adds new rows to the table, optionally autofilling from the last row
         function addRows() {
             const n = parseInt(prompt("How many rows to add?", "1"));
@@ -821,7 +794,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                         // 'a' (index 4), 'an' (index 5), 'g' (index 6), 'gn' (index 7),
                         // 'DNA_F_or_R' (index 8), 'BE' (index 9)
                         const colsToAutofill = [4, 5, 6, 7, 8, 9]; 
-
                         colsToAutofill.forEach(colIndex => {
                             const lastCell = lastRow.cells[colIndex];
                             const newCell = newRow.cells[colIndex];
@@ -833,7 +805,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                                 } else {
                                     lastValue = lastCell.innerText.trim();
                                 }
-
                                 // Apply value to new cell (select or innerText)
                                 if (newCell.querySelector("select")) {
                                     newCell.querySelector("select").value = lastValue;
@@ -848,7 +819,6 @@ cat > "$current_dir/html_file.html" <<'EOF'
                 saveState();
             }
         }
-
         // Removes rows from the table
         function removeRows() {
             const tb = document.querySelector("#dataTable tbody");
@@ -1179,7 +1149,6 @@ else
     echo -e "\n${NC}Starting base editing, indel calculation and heatmap creation...${NC}\n"
 fi
 
-
 # Create the Rmd file
 cat > "$current_dir/temp_script.Rmd" <<'EOF'
 ---
@@ -1190,7 +1159,6 @@ params:
   inverted_matrix: NULL
   base_editing: NULL
 ---
-
 
 ```{r}
 #################################################################################      
@@ -1708,7 +1676,6 @@ for (i in 1:nrow(dataframe)) {
   final_results_reads <- rbind(final_results_reads, result_df_reads)
 }
 
-
 #################################################################################
 # Create Excel File contend the edition, indel and reads alignment
 #################################################################################
@@ -1721,7 +1688,6 @@ dataframe_edition <- final_results_edition
 dataframe_indel <- final_results_indel
 dataframe_mapping <- final_results_reads
 dataframe_edition_total <- final_results_edition_total
-
 
 # Format decimals for each sheet inline (ensuring 0 is 0.00)
 # For the Reads sheet: round the "Aligned_percentage" column to 2 decimals
@@ -1978,7 +1944,6 @@ for (file_txt in files_txt) {
   }
 }
 
-
 #################################################################################
 # General heatmaps for each Batch files
 #################################################################################
@@ -2143,7 +2108,6 @@ for (file_txt in files_txt) {
   }
 }
 
-
 #################################################################################      
 #Individual Heatmaps
 #################################################################################
@@ -2260,8 +2224,6 @@ for (file_txt in files_txt) {
   }
 }
 
-
-
 #################################################################################     
 #Analysis of indels >0.2%
 #################################################################################
@@ -2376,12 +2338,9 @@ for (file in files_txt) {
   setwd("..")
 }
 
-
-
 #################################################################################       
 #Organization of outputs
 #################################################################################
-
 
 # Define the "Final_result" directory where the files are located
 drct_result <- file.path(dirname(file), "Final_result")
@@ -2461,6 +2420,7 @@ for (base_name in files_txt_clean) {
   
   cat("\n")
 }
+
 ###################################################################################
 #Save the instructions (Read me File)
 ###################################################################################
@@ -3022,6 +2982,7 @@ for (batch_dir in names(batch_map)) {
   saveWorkbook(wb, file=out_file, overwrite=TRUE)
   message("Generated: ", out_file)
 }
+
 # → PART 3: move the haplotype files into their folders
 hap_files <- list.files(
   path       = final_dir,
