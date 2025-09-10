@@ -1,5 +1,5 @@
 # Fast-Analyzr-BE: An automated tool for efficient base editing analysis
-Fast Analyzer BE is an open-source tool designed to simplify and standardize base editing analysis. It supports both Adenine Base Editing (ABE) and Cytosine Base Editing (CBE), providing a complete pipeline from raw sequencing data to final results. The tool automates preprocessing, guide classification, haplotype detection, and visualization, ensuring consistent and reproducible outputs. With user-friendly scripts and R-based reports, Fast Analyzer BE enables researchers to accurately quantify and compare editing efficiencies across samples, making it a valuable resource for genome editing studies.
+
 
 ```
                                                          ~~~ Fast Analyzr BE ~~~
@@ -12,19 +12,19 @@ Fast Analyzer BE is an open-source tool designed to simplify and standardize bas
           (_\__/(,_       |=====;__/___./             | |   |  | __| |    |__)|__  |              (_\__/(,_       |=====;__/___./
           | \  _////-._   '-'-'-''''''''              |____________________________|              | \  _////-._   '-'-'-''''''''
           J_/___'=> __/ \                                                                         J_/___'=> __/ \
-          |=====;__/___./                                     [Version 1.0]                       |=====;__/___./
+          |=====;__/___./                                     [Version 2.0]                       |=====;__/___./
           '-'-'-''''''''                                                                          '-'-'-''''''''
 ```        
 
 
 # Summary
-Base editing technologies have transformed gene therapy by enabling precise correction of single-nucleotide mutations without inducing double-strand DNA breaks. Cytosine and adenine base editors (CBEs and ABEs) allow targeted conversions of C•G→T•A and A•T→G•C, respectively. Base editing outcomes are typically assessed by next-generation sequencing (NGS) of PCR amplicons, known as amplicon sequencing. This method provides single-nucleotide resolution, supports high-throughput analysis of multiple targets, and is considered the gold standard for validating genome editing experiments.
-Among post-NGS analysis software, CRISPResso2 (https://github.com/pinellolab/CRISPResso2) is widely used. It integrates quality filtering, alignment, report generation, and quantification of editing outcomes, including indels and base editing efficiencies. However, its batch mode requires a strictly formatted input file and produces numerous output files (HTML reports, alignment tables, frequency matrices), making data preparation and consolidation time-consuming and error-prone.
-To address these challenges, we developed FastAnalyzr BE, an automated tool for quantifying base editing efficiencies and indel frequencies. Distributed as a Bash script with R-based processing, it installs via Conda and runs on Linux and macOS. FastAnalyzr BE operates in three steps:
-1) Batch file creation – An HTML template guides users to fill required fields with validation to prevent formatting errors, exporting a tab-delimited .txt file.
-2) Analysis with CRISPResso2 – Validated batch files are processed automatically, generating the necessary outputs.
-3) Result compilation & visualization – An R script aggregates outputs into unified summary tables, Excel files, and visualizations (heatmaps, haplotype analysis if needed).
-The pipeline supports parallel processing of dozens of amplicons or samples, with outputs ready for statistical analysis. By ensuring format compliance and automating result aggregation, FastAnalyzr BE reduces errors, saves time, and enhances the scalability and reliability of CRISPResso2-based workflows.
+Multiple tools have been developed for analyzing base editing outcomes from cytosine and adenine base editors (CBEs and ABEs). Among the most widely used is CRISPResso2
+, which integrates read quality filtering, alignment, reporting, and quantification of editing results, including indels and base-editing efficiencies. For experiments using NGS amplicon sequencing with one or more targets and gRNAs, the CRISPRessoBatch module is particularly useful, as it enables the analysis and comparison of multiple experimental conditions at the same site.
+However, in our routine use we identified some limitations. The batch mode requires a strictly formatted input file and produces a large number of output files (HTML reports, alignment tables, frequency matrices), making data preparation and consolidation time-consuming and error-prone. To address these challenges, we developed FastAnalyzr BE, an automated tool for quantifying base-editing efficiency and indel frequencies. Distributed as a Bash script with R-based processing, it is installed via Conda and runs on both Linux and macOS. The pipeline operates in three main steps:
+1. Batch file creation – An HTML template guides users through completing the required fields with built-in validation to prevent formatting errors, exporting a tab-delimited .txt file.
+2. Analysis with CRISPResso2 – Validated batch files are processed automatically, generating all required outputs.
+3. Compilation and visualization of results – An R script aggregates outputs into unified summary tables, Excel files, and visualizations (heatmaps, haplotype analysis if needed). The pipeline supports parallel processing of dozens of amplicons or samples, producing outputs ready for downstream statistical analysis.
+By enforcing format consistency and automating result aggregation, FastAnalyzr BE reduces errors, saves time, and improves the scalability and reliability of CRISPResso2-based workflows.
 
 
 # Requirements
@@ -58,7 +58,7 @@ cd Fast-Analyzr-BE
 # 4. Make the script executable
 chmod +x Fast_Analyzr_BE.sh
 
-# 5. Move script to global PATH (requires sudo)
+# 5. Move script to global PATH (optional)
 sudo mv Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
 
 # 6. Check the script menu
