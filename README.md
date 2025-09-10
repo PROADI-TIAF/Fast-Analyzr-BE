@@ -32,6 +32,7 @@ By enforcing format consistency and automating result aggregation, FastAnalyzr B
 2. Google Chrome – https://www.google.com/chrome/
 
 Note 1: For WSL users Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl
+
 Note 2: Enable Ask Where to Save Downloads in Google Chrome. Open Chrome → *Settings* → *Downloads* (or go to `chrome://settings/downloads`) and enable *Ask where to save each file before downloading*.
 
 
@@ -95,6 +96,35 @@ Fast_Analyzr_BE -h
                                                     n_processes <Number of processes. Can be set to 'max'>.
 -ha, --haplotypes                   Runs haplotype analysis on metadata files.
 ```
+
+
+# How to fill the Batch file (HTML Batch File Editor)
+This page explains how to use the Batch File Editor (the HTML interface) and what each column must contain. The editor exports a tab-delimited .txt file that is used by the pipeline.
+
+**Quick summary**
+1. Open the Batch File Editor (the provided HTML file) in your browser.
+2. Enter one row per sample. Use Add Rows / Remove Rows to edit rows.
+3. Fill all fields (no empty cells) and use the Save Batch File as TXT button to download the tab-delimited batch file. The file is downloaded as batch_file.txt — rename if needed.
+   
+**Important note about experiment design**
+Each Batch file should correspond to a single amplicon and single sgRNA (i.e., the same a and g should be used across rows). If you have different amplicons or different guides, create separate Batch files. Additionally, the FASTQ files must be in the same analysis folder
+
+**Column definitions, required format and examples**
+The editor shows a header row and the following editable columns (order in the saved file is the same as the visible headers):
+
+| Column name  | Meaning                       | Allowed characters (validation)                                                                             | Example                                                            |
+| ------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `fastq_r1`   | FASTQ file name (R1)          | Letters, digits, `.`, `_`, `-` (`/` or spaces **not** allowed). Regex: `^[A-Za-z0-9._-]+$`                   | `sampleA_R1.fastq.gz` (the validator accepts only the filename)    |
+| `fastq_r2`   | FASTQ file name (R2)          | Same as `fastq_r1`. Regex: `^[A-Za-z0-9._-]+$`                                                              | `sampleA_R2.fastq.gz`                                              |
+| `n`          | Output report name (ID)       | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `sampleA_rep1`                                                     |
+| `a`          | Amplicon sequence (DNA)       | Letters only (`A/C/G/T`). Regex: `^[A-Za-z]+$`                                                              | `ATGCGTACG...`                                                     |
+| `an`         | Amplicon name                 | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `amplicon_1`                                                       |
+| `g`          | sgRNA sequence (guide)        | Letters only. Regex: `^[A-Za-z]+$`                                                                          | `GACGTTACGT...`                                                    |
+| `gn`         | sgRNA name                    | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `guide_A`                                                          |
+| `DNA_F_or_R` | Strand where guide was designed | Dropdown: `F` (forward), `R` (reverse) or blank                                                             | `F`                                                                |
+| `BE`         | Base editor                   | Dropdown: `ABE`, `CBE` or blank                                                                             | `CBE`                                                              |
+
+After saving the batch file, you can click to create a new one, which will erase all previous information. When you're finished, simply close the Google Chrome page and press `y` or `yes` to confirm the analysis in the terminal.
 
 
 # Output layout and post-analysis files
@@ -198,32 +228,3 @@ If files are missing or the output structure differs from the example above:
 2. Verify that your Batch file follows the required tab-delimited format.
 3. Inspect CRISPResso2 raw outputs for clues.
 4. Re-run the affected batch after fixing the input format.
-
-
-# How to fill the Batch file (HTML Batch File Editor)
-This page explains how to use the Batch File Editor (the HTML interface) and what each column must contain. The editor exports a tab-delimited .txt file that is used by the pipeline.
-
-**Quick summary**
-1. Open the Batch File Editor (the provided HTML file) in your browser.
-2. Enter one row per sample. Use Add Rows / Remove Rows to edit rows.
-3. Fill all fields (no empty cells) and use the Save Batch File as TXT button to download the tab-delimited batch file. The file is downloaded as batch_file.txt — rename if needed.
-   
-**Important note about experiment design**
-Each Batch file should correspond to a single amplicon and single sgRNA (i.e., the same a and g should be used across rows). If you have different amplicons or different guides, create separate Batch files. Additionally, the FASTQ files must be in the same analysis folder
-
-**Column definitions, required format and examples**
-The editor shows a header row and the following editable columns (order in the saved file is the same as the visible headers):
-
-| Column name  | Meaning                       | Allowed characters (validation)                                                                             | Example                                                            |
-| ------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `fastq_r1`   | FASTQ file name (R1)          | Letters, digits, `.`, `_`, `-` (`/` or spaces **not** allowed). Regex: `^[A-Za-z0-9._-]+$`                   | `sampleA_R1.fastq.gz` (the validator accepts only the filename)    |
-| `fastq_r2`   | FASTQ file name (R2)          | Same as `fastq_r1`. Regex: `^[A-Za-z0-9._-]+$`                                                              | `sampleA_R2.fastq.gz`                                              |
-| `n`          | Output report name (ID)       | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `sampleA_rep1`                                                     |
-| `a`          | Amplicon sequence (DNA)       | Letters only (`A/C/G/T`). Regex: `^[A-Za-z]+$`                                                              | `ATGCGTACG...`                                                     |
-| `an`         | Amplicon name                 | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `amplicon_1`                                                       |
-| `g`          | sgRNA sequence (guide)        | Letters only. Regex: `^[A-Za-z]+$`                                                                          | `GACGTTACGT...`                                                    |
-| `gn`         | sgRNA name                    | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `guide_A`                                                          |
-| `DNA_F_or_R` | Strand where guide was designed | Dropdown: `F` (forward), `R` (reverse) or blank                                                             | `F`                                                                |
-| `BE`         | Base editor                   | Dropdown: `ABE`, `CBE` or blank                                                                             | `CBE`                                                              |
-
-After saving the batch file, you can click to create a new one, which will erase all previous information. When you're finished, simply close the Google Chrome page and press `y` or `yes` to confirm the analysis in the terminal.
