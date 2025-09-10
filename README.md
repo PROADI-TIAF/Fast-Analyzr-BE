@@ -161,13 +161,13 @@ Final_result/
 
 ---
 
-** `final_result.tiff` **
+**`final_result.tiff`**
 
 A heatmap image that summarizes editing rates and indel values across samples. When the pipeline detects >12 samples it splits results across multiple heatmap files to keep figures readable.
 
 ---
 
-** `indels.xlsx` (when present) **
+**`indels.xlsx` (when present)**
 
 * Generated when any sample displays indel frequency > 0.2%.
 * Each sample that meets the threshold is exported to a separate sheet for inspection.
@@ -185,7 +185,7 @@ If the haplotypes function is enabled (`-ha`; `--haplotypes` ), the pipeline wil
    * `haplotypes.xlsx` — table of observed haplotypes for the chosen positions.
    * `haplotypes_stacked_bar.png` — stacked-bar visualization of haplotype frequencies.
 
-**Visualization note:** haplotypes with frequency **< 1%** are grouped into **Other Haplotypes** and are not listed individually in the chart legend to improve readability.
+*Visualization note:* haplotypes with frequency < 1% are grouped into *Other Haplotypes* and are not listed individually in the chart legend to improve readability.
 
 ---
 
