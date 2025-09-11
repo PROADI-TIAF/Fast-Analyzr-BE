@@ -65,7 +65,7 @@ conda activate Fast_Analyzr_BE
 
 # 3. Clone the repository
 git clone https://github.com/PROADI-TIAF/Fast-Analyzr-BE.git
-cd Fast-Analyzr-BE
+cd Fast-Analyzr-BE/
 
 # 4. Make the script executable
 chmod +x Fast_Analyzr_BE.sh
@@ -83,7 +83,7 @@ After installing Fast-Analyzr-BE, follow these steps to run an analysis:
 
 ```
 # 1. Go to your analysis folder
-cd /path/to/your/analysis_folder
+cd /path/to/your/analysis_folder/
 
 # 2. Run the program
 Fast_Analyzr_BE
@@ -116,10 +116,10 @@ The repository already contains example batch files in the `Test/` folder.
 **Steps**
 
 ```
-# 1. Enter the test folder:
-cd Test
+# 1. Enter the test folder
+cd Test/
    
-# 2. Run the pipeline with the test data:
+# 2. Run the pipeline with the test data
 Fast_Analyzr_BE -n -ha
 ```
 
