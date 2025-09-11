@@ -28,14 +28,23 @@ By enforcing format consistency and automating result aggregation, Fast-Analyzr-
 Currently, the tool is available in `version 2.0`, which includes all the features of version 1.0 (read analysis, base-editing quantification, and indel detection), with the addition of haplotype calculation based on user-specified nucleotide positions. The `.sh` file of version 1.0 can be found in the `Version_1` folder.
 
 
-# Requirements
-1. Conda – https://docs.conda.io/en/latest/miniconda.html
-2. Google Chrome – https://www.google.com/chrome/
+## Requirements
+- **Conda** – https://docs.conda.io/en/latest/miniconda.html  
+- **Google Chrome** – https://www.google.com/chrome/  
 
-Note 1: For WSL users Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl
+**Note 1:** For WSL users Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl  
+**Note 2:** Enable *Ask Where to Save Downloads* in Google Chrome.  
+Open Chrome → Settings → Downloads (or go to `chrome://settings/downloads`) and enable *Ask where to save each file before downloading*.  
 
-Note 2: Enable Ask Where to Save Downloads in Google Chrome. Open Chrome → *Settings* → *Downloads* (or go to `chrome://settings/downloads`) and enable *Ask where to save each file before downloading*.
-
+- **Bash**  
+  - Required minimum version: **4.0**  
+  - Example (check your version with `bash --version`):  
+    ```
+    Current Bash version: 5.1.16
+    Required minimum version: 4.0
+    Your Bash version (5.1.16) is 4.0 or newer. You're good to go!
+    ```
+    
 
 # Installation
 The way to install Fast-Analyzr-BE is via conda, follow these steps:
