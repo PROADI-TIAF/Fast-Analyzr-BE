@@ -105,15 +105,11 @@ The repository already contains example batch files in the `Test/` folder.
 
 **Steps**
 
+```
 1. Enter the test folder:
-
-   ```
-   cd Test/
-   ```
+cd Test/
    
 2. Run the pipeline with the test data:
-
-```
 Fast_Analyzr_BE -n -ha
 ```
 
@@ -158,12 +154,7 @@ Once the haplotype analysis is finished, you should see the following message:
 Haplotypes analysis completed!
 ```
 
-Finally, compare the results you obtained with the expected results located in:
-
-```
-Test/Expected_Final_result/
-```
-If the files match, the installation and execution are working correctly!
+Finally, compare the results you obtained with the expected results located in: `Test/Expected_Final_result/`. If the files match, the installation and execution are working correctly!
 
 # How to fill the Batch file (HTML Batch File Editor)
 This page explains how to use the Batch File Editor (the HTML interface) and what each column must contain. The editor exports a tab-delimited .txt file that is used by the pipeline.
