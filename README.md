@@ -25,6 +25,7 @@ However, in our routine use we identified some limitations. The batch mode requi
 2. Analysis with CRISPResso2 – Validated batch files are processed automatically, generating all required outputs.
 3. Compilation and visualization of results – An R script aggregates outputs into unified summary tables, Excel files, and visualizations (heatmaps, haplotype analysis if needed). The pipeline supports parallel processing of dozens of amplicons or samples, producing outputs ready for downstream statistical analysis.
 By enforcing format consistency and automating result aggregation, Fast-Analyzr-BE reduces errors, saves time, and improves the scalability and reliability of CRISPResso2-based workflows.
+
 Currently, the tool is available in `version 2.0`, which includes all the features of version 1.0 (read analysis, base-editing quantification, and indel detection), with the addition of haplotype calculation based on user-specified nucleotide positions. The `.sh` file of version 1.0 can be found in the `Version_1` folder.
 
 
