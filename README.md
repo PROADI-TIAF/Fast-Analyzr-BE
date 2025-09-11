@@ -98,6 +98,73 @@ Fast_Analyzr_BE -h
 ```
 
 
+# Test the installation
+
+After installing, you can run a quick test to make sure everything is working correctly.  
+The repository already contains example batch files in the `Test/` folder.
+
+**Steps**
+
+1. Enter the test folder:
+
+   ```
+   cd Test/
+   ```
+   
+2. Run the pipeline with the test data:
+
+```
+Fast_Analyzr_BE -n -ha
+```
+
+If everything is correct, you should see the following message (symbolizing that the base editing and indel calculation is complete):
+
+```
+                            _    _                                                     _    _
+                           (_\__/(,_                                                  (_\__/(,_
+                           | \  _////-._                                             | \  _////-._
+            _    _         L_/__  => __/ \                            _    _         L_/__  => __/ \
+           (_\__/(,_       |=====;__/___./                           (_\__/(,_       |=====;__/___./
+           | \  _////-._   '-'-'-''''''''                            | \  _////-._   '-'-'-''''''''
+           J_/___'=> __/ \                                           J_/___'=> __/ \
+           |=====;__/___./                                           |=====;__/___./
+           '-'-'-''''''''                                            '-'-'-''''''''
+
+Base editing and indel calculation completed!
+```
+
+Next, you will be asked to provide the positions of the bases for haplotype analysis.
+
+```
+Please enter the desired positions (comma-separated) for each guide:
+
+  Positions for 'Guide-1' (GGCAAGGCTGGCCAACCCAT): 4,5
+  Positions for 'Guide-2' (AGATATTTGCATTGAGATAG): 3,5,11
+```
+
+Once the haplotype analysis is finished, you should see the following message:
+
+```
+                            _    _                                                     _    _
+                           (_\__/(,_                                                  (_\__/(,_
+                           | \  _////-._                                             | \  _////-._
+            _    _         L_/__  => __/ \                            _    _         L_/__  => __/ \
+           (_\__/(,_       |=====;__/___./                           (_\__/(,_       |=====;__/___./
+           | \  _////-._   '-'-'-''''''''                            | \  _////-._   '-'-'-''''''''
+           J_/___'=> __/ \                                           J_/___'=> __/ \
+           |=====;__/___./                                           |=====;__/___./
+           '-'-'-''''''''                                            '-'-'-''''''''
+
+Haplotypes analysis completed!
+```
+
+Finally, compare the results you obtained with the expected results located in:
+
+```
+Test/Expected_Final_result/
+```
+If the files match, the installation and execution are working correctly!
+
 # How to fill the Batch file (HTML Batch File Editor)
 This page explains how to use the Batch File Editor (the HTML interface) and what each column must contain. The editor exports a tab-delimited .txt file that is used by the pipeline.
 
