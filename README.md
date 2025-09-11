@@ -112,17 +112,17 @@ Each Batch file should correspond to a single amplicon and single sgRNA (i.e., t
 **Column definitions, required format and examples**
 The editor shows a header row and the following editable columns (order in the saved file is the same as the visible headers):
 
-| Column name  | Meaning                       | Allowed characters (validation)                                                                             | Example                                                            |
-| ------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `fastq_r1`   | FASTQ file name (R1)          | Letters, digits, `.`, `_`, `-` (`/` or spaces **not** allowed). Regex: `^[A-Za-z0-9._-]+$`                   | `sampleA_R1.fastq.gz` (the validator accepts only the filename)    |
-| `fastq_r2`   | FASTQ file name (R2)          | Same as `fastq_r1`. Regex: `^[A-Za-z0-9._-]+$`                                                              | `sampleA_R2.fastq.gz`                                              |
-| `n`          | Output report name (ID)       | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `sampleA_rep1`                                                     |
-| `a`          | Amplicon sequence (DNA)       | Letters only (`A/C/G/T`). Regex: `^[A-Za-z]+$`                                                              | `ATGCGTACG...`                                                     |
-| `an`         | Amplicon name                 | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `amplicon_1`                                                       |
-| `g`          | sgRNA sequence (guide)        | Letters only. Regex: `^[A-Za-z]+$`                                                                          | `GACGTTACGT...`                                                    |
-| `gn`         | sgRNA name                    | Letters, digits, `_`, `-`. Regex: `^[A-Za-z0-9_-]+$`                                                        | `guide_A`                                                          |
-| `DNA_F_or_R` | Strand where guide was designed | Dropdown: `F` (forward), `R` (reverse) or blank                                                             | `F`                                                                |
-| `BE`         | Base editor                   | Dropdown: `ABE`, `CBE` or blank                                                                             | `CBE`                                                              |
+| Column name  | Meaning                         | Allowed characters / options   | Example               |
+| ------------ | ------------------------------- | ------------------------------ | --------------------- |
+| `fastq_r1`   | FASTQ file name (R1)            | Letters, digits, `.`, `_`, `-` | `sampleA_R1.fastq.gz` |
+| `fastq_r2`   | FASTQ file name (R2)            | Letters, digits, `.`, `_`, `-` | `sampleA_R2.fastq.gz` |
+| `n`          | Output report name (ID)         | Letters, digits, `_`, `-`      | `sampleA_rep1`        |
+| `a`          | Amplicon sequence (DNA)         | Letters only (`A/C/G/T`)       | `ATGCGTACG...`        |
+| `an`         | Amplicon name                   | Letters, digits, `_`, `-`      | `amplicon_1`          |
+| `g`          | sgRNA sequence (guide)          | Letters only (`A/C/G/T`)       | `GACGTTACGT...`       |
+| `gn`         | sgRNA name                      | Letters, digits, `_`, `-`      | `guide_A`             |
+| `DNA_F_or_R` | Strand where guide was designed | `F` (forward) or `R` (reverse) | `F`                   |
+| `BE`         | Base editor                     | `ABE` or `CBE`                 | `CBE`                 |
 
 After saving the batch file, you can click to create a new one, which will erase all previous information. When you're finished, simply close the Google Chrome page and press `y` or `yes` to confirm the analysis in the terminal.
 
