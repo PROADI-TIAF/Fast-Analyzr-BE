@@ -37,13 +37,7 @@ Currently, the tool is available in `version 2.0`, which includes all the featur
 Open Chrome → Settings → Downloads (or go to `chrome://settings/downloads`) and enable *Ask where to save each file before downloading*.  
 
 - **Bash**  
-  - Required minimum version: **4.0**  
-  - Example (check your version with `bash --version`):  
-    ```
-    Current Bash version: 5.1.16
-    Required minimum version: 4.0
-    Your Bash version (5.1.16) is 4.0 or newer. You're good to go!
-    ```
+  - Required minimum version: **4.0**, check your version with `bash --version`.
     
 
 # Installation
