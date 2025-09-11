@@ -108,7 +108,7 @@ The repository already contains example batch files in the `Test/` folder.
 
 ```
 # 1. Enter the test folder:
-cd Test/
+cd Test
    
 # 2. Run the pipeline with the test data:
 Fast_Analyzr_BE -n -ha
