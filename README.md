@@ -20,11 +20,12 @@
 # Summary
 Multiple tools have been developed for analyzing base editing outcomes from cytosine and adenine base editors (CBEs and ABEs). Among the most widely used is CRISPResso2
 , which integrates read quality filtering, alignment, reporting, and quantification of editing results, including indels and base-editing efficiencies. For experiments using NGS amplicon sequencing with one or more targets and gRNAs, the CRISPRessoBatch module is particularly useful, as it enables the analysis and comparison of multiple experimental conditions at the same site.
-However, in our routine use we identified some limitations. The batch mode requires a strictly formatted input file and produces a large number of output files (HTML reports, alignment tables, frequency matrices), making data preparation and consolidation time-consuming and error-prone. To address these challenges, we developed FastAnalyzr BE, an automated tool for quantifying base-editing efficiency and indel frequencies. Distributed as a Bash script with R-based processing, it is installed via Conda and runs on both Linux and macOS. The pipeline operates in three main steps:
+However, in our routine use we identified some limitations. The batch mode requires a strictly formatted input file and produces a large number of output files (HTML reports, alignment tables, frequency matrices), making data preparation and consolidation time-consuming and error-prone. To address these challenges, we developed **Fast-Analyzr-BE**, an automated tool for quantifying base-editing efficiency and indel frequencies. Distributed as a Bash script with R-based processing, it is installed via Conda and runs on both Linux and macOS. The pipeline operates in three main steps:
 1. Batch file creation – An HTML template guides users through completing the required fields with built-in validation to prevent formatting errors, exporting a tab-delimited .txt file.
 2. Analysis with CRISPResso2 – Validated batch files are processed automatically, generating all required outputs.
 3. Compilation and visualization of results – An R script aggregates outputs into unified summary tables, Excel files, and visualizations (heatmaps, haplotype analysis if needed). The pipeline supports parallel processing of dozens of amplicons or samples, producing outputs ready for downstream statistical analysis.
 By enforcing format consistency and automating result aggregation, FastAnalyzr BE reduces errors, saves time, and improves the scalability and reliability of CRISPResso2-based workflows.
+Currently, the tool is available in `version 2.0`, which includes all the features of version 1.0 (read analysis, base-editing quantification, and indel detection), with the addition of haplotype calculation based on user-specified nucleotide positions. The `.sh` file of version 1.0 can be found in the `Version_1` folder.
 
 
 # Requirements
@@ -188,7 +189,7 @@ After saving the batch file, you can click to create a new one, which will erase
 
 # Output layout and post-analysis files
 
-**File tree (example)**
+**File tree**
 
 ```
 Final_result/
