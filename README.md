@@ -107,10 +107,10 @@ The repository already contains example batch files in the `Test/` folder.
 **Steps**
 
 ```
-1. Enter the test folder:
+# 1. Enter the test folder:
 cd Test/
    
-2. Run the pipeline with the test data:
+# 2. Run the pipeline with the test data:
 Fast_Analyzr_BE -n -ha
 ```
 
@@ -295,6 +295,6 @@ If files are missing or the output structure differs from the example above:
 Fast-Analyzr-BE was developed as part of a project funded by **PROADI-SUS Anemia Falciforme**, Ministry of Health, Brazil, and created by researchers at **Hospital Israelita Albert Einstein**, São Paulo, Brazil.  
 
 **Contributors (Proponents):**
-- Paulo Alfonso Schuroff  
+- Paulo Alfonso Schüroff  
 - Davi Coe Torres  
 - Ricardo Weinlich  
