@@ -181,16 +181,16 @@ The editor shows a header row and the following editable columns (order in the s
 
 
 | **Column name** | **Meaning**                   | **Allowed values / characters** | **Example**           |
-| ---------------- | ----------------------------- | ------------------------------- | --------------------- |
-| `fastq_r1`       | FASTQ file name (R1)          | Letters, digits, `.`, `_`, `-`  | `sampleA_R1.fastq.gz` |
-| `fastq_r2`       | FASTQ file name (R2)          | Letters, digits, `.`, `_`, `-`  | `sampleA_R2.fastq.gz` |
-| `n`              | Output report name (ID)       | Letters, digits, `_`, `-`       | `sampleA_rep1`        |
-| `a`              | Amplicon sequence (DNA)       | A, C, G, T only                 | `ATGCGTACG...`        |
-| `an`             | Amplicon name                 | Letters, digits, `_`, `-`       | `amplicon_1`          |
-| `g`              | sgRNA sequence (guide)        | A, C, G, T only                 | `GACGTTACGT...`       |
-| `gn`             | sgRNA name                    | Letters, digits, `_`, `-`       | `guide_A`             |
-| `DNA_F_or_R`     | Strand where guide was designed | `F` (forward) or `R` (reverse) | `F`                   |
-| `BE`             | Base editor                   | `ABE` or `CBE`                  | `CBE`                 |
+|-----------------|-------------------------------|---------------------------------|---------------------|
+| `fastq_r1`      | FASTQ file name (R1)          | Letters, digits, `.`, `_`, `-` | `sampleA_R1.fastq.gz` |
+| `fastq_r2`      | FASTQ file name (R2)          | Letters, digits, `.`, `_`, `-` | `sampleA_R2.fastq.gz` |
+| `n`             | Output report name (ID)       | Letters, digits, `_`, `-`       | `sampleA_rep1`        |
+| `a`             | Amplicon sequence (DNA) 5′→3′ | A, C, G, T only                 | `ATGCGTACG...`        |
+| `an`            | Amplicon name                 | Letters, digits, `_`, `-`       | `amplicon_1`          |
+| `g`             | sgRNA sequence (guide) 5′→3′  | A, C, G, T only                 | `GACGTTACGT...`       |
+| `gn`            | sgRNA name                    | Letters, digits, `_`, `-`       | `guide_A`             |
+| `DNA_F_or_R`    | Strand where guide was designed | `F` (forward) or `R` (reverse) | `F`                   |
+| `BE`            | Base editor                   | `ABE` or `CBE`                  | `CBE`                 |
 
 After saving the batch file, you can click to create a new one, which will erase all previous information. When you're finished, simply close the Google Chrome page and press `y` or `yes` to confirm the analysis in the terminal.
 
