@@ -29,16 +29,15 @@ Currently, the tool is available in `version 2.0`, which includes all the featur
 
 
 ## Requirements
+- **Bash**  
+  - Required minimum version: **4.0**, check your version with `bash --version`.
 - **Conda** – https://docs.conda.io/en/latest/miniconda.html  
 - **Google Chrome** – https://www.google.com/chrome/  
 
 **Note 1:** For WSL users Google Chrome must be installed via terminal. Follow the instructions here: https://scottspence.com/posts/use-chrome-in-ubuntu-wsl  
 **Note 2:** Enable *Ask Where to Save Downloads* in Google Chrome.  
 Open Chrome → Settings → Downloads (or go to `chrome://settings/downloads`) and enable *Ask where to save each file before downloading*.  
-
-- **Bash**  
-  - Required minimum version: **4.0**, check your version with `bash --version`.
-    
+  
 
 # Installation
 The way to install Fast-Analyzr-BE is via conda, follow these steps:
