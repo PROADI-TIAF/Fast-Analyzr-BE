@@ -300,7 +300,7 @@ If files are missing or the output structure differs from the example above:
 
 Fast-Analyzr-BE was developed as part of a project funded by **PROADI-SUS Anemia Falciforme**, Ministry of Health, Brazil, and created by researchers at **Hospital Israelita Albert Einstein**, São Paulo, Brazil.  
 
-**Contributors (Proponents):**
+**Contributors:**
 - Paulo Alfonso Schüroff  
 - Davi Coe Torres  
 - Ricardo Weinlich  
