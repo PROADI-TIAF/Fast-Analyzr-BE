@@ -29,8 +29,7 @@ Currently, the tool is available in `version 2.0`, which includes all the featur
 
 
 ## Requirements
-- **Bash**  
-  - Required minimum version: **4.0**, check your version with `bash --version`.
+- **Bash**  – Required minimum version: **4.0**, check your version with `bash --version`.
 - **Conda** – https://docs.conda.io/en/latest/miniconda.html  
 - **Google Chrome** – https://www.google.com/chrome/  
 
