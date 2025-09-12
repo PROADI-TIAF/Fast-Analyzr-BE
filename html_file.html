@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch File Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #666;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+            min-width: 100px;
+            position: relative;
+        }
+        select {
+            width: 100%;
+        }
+        td.selected {
+            background-color: #cce5ff;
+        }
+        th.index, td.index {
+            background-color: #f1f1f1;
+            font-weight: bold;
+            width: 40px;
+            max-width: 40px;
+            min-width: 40px;
+        }
+        /* Apply gray background style to table headers */
+        thead th {
+            background-color: #f1f1f1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .modal-button {
+            margin: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        .modal-button:hover {
+            background-color: #367c39;
+        }
+        #noButton {
+            background-color: #f44336;
+            color: white;
+        }
+        #noButton:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <h1>Batch File Editor</h1>
+    <p>Each Batch file should include a single amplicon and guide RNA sequence. For multiple amplicons and/or guides, create a Batch file for each.</p>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th class="index">#</th>
+                <th>fastq_r1</th>
+                <th>fastq_r2</th>
+                <th>n</th>
+                <th>a</th>
+                <th>an</th>
+                <th>g</th>
+                <th>gn</th>
+                <th>DNA_F_or_R</th>
+                <th>BE</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <button onclick="addRows()">Add Rows</button>
+    <button onclick="removeRows()">Remove Rows</button>
+    <button id="saveButton" onclick="saveTXT()">Save Batch File as TXT</button>
+    <button id="newFileButton">Create New Batch File</button>
+
+    <div id="newFileModal" class="modal">
+        <div class="modal-content">
+            <p>Are you sure you want to create a new batch file?</p>
+            <button id="yesButton" class="modal-button">Yes</button>
+            <button id="noButton" class="modal-button">No</button>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <p style="font-size: 0.9em;"><b>CRISPRessoBatch Parameters:</b></p>
+        <p style="font-size: 0.9em;">fastq_r1 = Fastq_r1 file name</p>
+        <p style="font-size: 0.9em;">fastq_r2 = Fastq_r2 file name</p>
+        <p style="font-size: 0.9em;">n = Output name of the report</p>
+        <p style="font-size: 0.9em;">a = Amplicon sequence</p>
+        <p style="font-size: 0.9em;">an = Amplicon name</p>
+        <p style="font-size: 0.9em;">g = sgRNA sequence</p>
+        <p style="font-size: 0.9em;">gn = sgRNA name</p>
+        <p style="font-size: 0.9em;">DNA_F_or_R = Defines if the sgRNA was designed on the forward (F) or reverse (R) DNA strand</p>
+        <p style="font-size: 0.9em;">BE = Base editor (ABE or CBE)</p>
+    </div>
+
+    <script>
+        let undoStack = []; // Stores table states for undo functionality
+        let selectionStart = null; // Keeps track of the start cell for range selection
+        let copiedDataBlock = null; // Stores data for block paste operations
+
+        // Event listener for Ctrl+Z (undo)
+        document.addEventListener("keydown", function(e) {
+            if (e.ctrlKey && (e.key === "z" || e.key === "Z")) {
+                e.preventDefault();
+                undo();
+            }
+        });
+
+        // Saves the current state of the table to the undo stack
+        function saveState() {
+            const table = document.getElementById("dataTable");
+            const state = [];
+            for (let i = 0; i < table.rows.length; i++) {
+                const rowData = [];
+                const cells = table.rows[i].cells;
+                for (let j = 0; j < cells.length; j++) {
+                    const sel = cells[j].querySelector("select");
+                    rowData.push(sel ? sel.value : cells[j].innerText.trim());
+                }
+                state.push(rowData);
+            }
+            undoStack.push(state);
+        }
+
+        // Restores the previous state from the undo stack
+        function undo() {
+            if (undoStack.length > 1) {
+                undoStack.pop(); // Remove current state
+                const prev = undoStack[undoStack.length - 1]; // Get previous state
+                const table = document.getElementById("dataTable");
+                for (let i = 0; i < table.rows.length; i++) {
+                    const cells = table.rows[i].cells;
+                    for (let j = 0; j < cells.length; j++) {
+                        const sel = cells[j].querySelector("select");
+                        if (sel) sel.value = prev[i][j];
+                        else cells[j].innerText = prev[i][j];
+                    }
+                }
+            }
+        }
+
+        // Creates a new table row with appropriate cells and event listeners
+        function createRow(idx) {
+            const tr = document.createElement("tr");
+            const td0 = document.createElement("td");
+            td0.className = "index";
+            td0.innerText = idx;
+            tr.appendChild(td0);
+            // Columns remaining after 'q', 'w', 'wc' removal
+            const cols = ["fastq_r1", "fastq_r2", "n", "a", "an", "g", "gn"];
+            cols.forEach((col, i) => {
+                const td = document.createElement("td");
+                td.contentEditable = "true"; // Makes cell editable
+                td.dataset.col = col; // Stores column name as data attribute
+                td.addEventListener("click", cellClickHandler); // Handles cell selection
+                td.addEventListener("keydown", cellKeydownHandler); // Handles keyboard navigation
+                td.addEventListener("blur", function(e) {
+                    saveState(); // Save state on cell blur
+                    // Autofill for "a", "an", "g", "gn" columns
+                    if (["a", "an", "g", "gn"].includes(col)) {
+                        const row = e.target.parentElement;
+                        const val = e.target.innerText.trim();
+                        const colIndex = e.target.cellIndex;
+                        // Fill same value down the column
+                        for (let i = row.rowIndex + 1; i < document.getElementById("dataTable").rows.length; i++) {
+                            const nextRow = document.getElementById("dataTable").rows[i];
+                            const targetCell = nextRow.cells[colIndex];
+                            if (targetCell) {
+                                targetCell.innerText = val;
+                            }
+                        }
+                        saveState(); // Save state after auto-filling
+                    }
+                });
+                tr.appendChild(td);
+            });
+
+            // Add dropdown for DNA_F_or_R
+            const tdStr = document.createElement("td");
+            const selStr = document.createElement("select");
+            ["", "F", "R"].forEach(v => {
+                let o = document.createElement("option");
+                o.value = v;
+                o.text = v;
+                selStr.appendChild(o);
+            });
+            selStr.addEventListener("change", () => {
+                autofillColumn(8, selStr.value); // New column index for DNA_F_or_R (was 11)
+                saveState();
+            });
+            selStr.addEventListener("click", cellClickHandler);
+            selStr.addEventListener("keydown", cellKeydownHandler);
+            tdStr.appendChild(selStr);
+            tr.appendChild(tdStr);
+
+            // Add dropdown for BE (Base Editor)
+            const tdBE = document.createElement("td");
+            const selBE = document.createElement("select");
+            ["", "ABE", "CBE"].forEach(v => {
+                let o = document.createElement("option");
+                o.value = v;
+                o.text = v;
+                selBE.appendChild(o);
+            });
+            selBE.addEventListener("change", () => {
+                autofillColumn(9, selBE.value); // New column index for BE (was 12)
+                saveState();
+            });
+            selBE.addEventListener("click", cellClickHandler);
+            selBE.addEventListener("keydown", cellKeydownHandler);
+            tdBE.appendChild(selBE);
+            tr.appendChild(tdBE);
+            return tr;
+        }
+
+        // Autofills a specific column with a given value for all rows
+        function autofillColumn(ci, val) {
+            document.querySelectorAll("#dataTable tbody tr").forEach(r => {
+                const c = r.cells[ci];
+                if (c) {
+                    const s = c.querySelector("select");
+                    if (s) s.value = val;
+                    else c.innerText = val;
+                }
+            });
+        }
+
+        // Handles cell click events for selection
+        function cellClickHandler(e) {
+            if (e.shiftKey && selectionStart) selectRange(selectionStart, e.currentTarget);
+            else {
+                clearSelection();
+                markSelected(e.currentTarget);
+                selectionStart = e.currentTarget;
+            }
+        }
+
+        // Selects a range of cells given a start and end cell
+        function selectRange(s, e) {
+            clearSelection();
+            const t = document.getElementById("dataTable");
+            const r1 = s.parentElement.rowIndex,
+                c1 = s.cellIndex,
+                r2 = e.parentElement.rowIndex,
+                c2 = e.cellIndex;
+            const rmin = Math.min(r1, r2),
+                rmax = Math.max(r1, r2),
+                cmin = Math.min(c1, c2),
+                cmax = Math.max(c1, c2);
+            for (let i = rmin; i <= rmax; i++) {
+                for (let j = cmin; j <= cmax; j++) {
+                    t.rows[i].cells[j].classList.add("selected");
+                }
+            }
+        }
+
+        // Clears all currently selected cells
+        function clearSelection() {
+            document.querySelectorAll("td.selected").forEach(td => td.classList.remove("selected"));
+        }
+
+        // Marks a single cell as selected
+        function markSelected(c) {
+            clearSelection();
+            c.classList.add("selected");
+        }
+
+        // Handles keyboard navigation (arrows) within table cells
+        function cellKeydownHandler(e) {
+            let c = e.currentTarget.tagName === "TD" ? e.currentTarget : e.currentTarget.parentElement;
+            const tr = c.parentElement,
+                ci = c.cellIndex;
+            let target = null;
+            if (e.key === "ArrowRight" && c.nextElementSibling) target = c.nextElementSibling;
+            if (e.key === "ArrowLeft" && c.previousElementSibling) target = c.previousElementSibling;
+            if (e.key === "ArrowDown" && tr.nextElementSibling) target = tr.nextElementSibling.cells[ci];
+            if (e.key === "ArrowUp" && tr.previousElementSibling) target = tr.previousElementSibling.cells[ci];
+            if (target) {
+                e.preventDefault();
+                if (e.shiftKey && selectionStart) selectRange(selectionStart, target);
+                else {
+                    clearSelection();
+                    markSelected(target);
+                    selectionStart = target;
+                }
+                if (target.isContentEditable) target.focus();
+                else {
+                    const s = target.querySelector("select");
+                    if (s) s.focus();
+                }
+            }
+        }
+
+        // Handles Ctrl+C (copy) functionality
+        document.addEventListener("keydown", function(e) {
+            if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
+                const sels = document.querySelectorAll("td.selected");
+                if (sels.length) {
+                    let rmin = Infinity,
+                        rmax = -1,
+                        cmin = Infinity,
+                        cmax = -1;
+                    sels.forEach(cell => {
+                        const ri = cell.parentElement.rowIndex,
+                            ci = cell.cellIndex;
+                        rmin = Math.min(rmin, ri);
+                        rmax = Math.max(rmax, ri);
+                        cmin = Math.min(cmin, ci);
+                        cmax = Math.max(cmax, ci);
+                    });
+                    let block = [],
+                        txt = "";
+                    const tbl = document.getElementById("dataTable");
+                    for (let i = rmin; i <= rmax; i++) {
+                        let row = [];
+                        for (let j = cmin; j <= cmax; j++) {
+                            let cell = tbl.rows[i].cells[j];
+                            let v = cell.querySelector("select") ? cell.querySelector("select").value : cell.innerText.trim();
+                            row.push(v);
+                        }
+                        block.push(row);
+                        txt += row.join("\t") + "\n";
+                    }
+                    copiedDataBlock = block;
+                    e.preventDefault();
+                    navigator.clipboard.writeText(txt);
+                }
+            }
+        });
+
+        // Handles Delete key to clear selected cells
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Delete") {
+                document.querySelectorAll("td.selected").forEach(cell => {
+                    const s = cell.querySelector("select");
+                    if (s) {
+                        s.value = "";
+                        s.dispatchEvent(new Event("change"));
+                    } else cell.innerText = "";
+                });
+                saveState();
+            }
+        });
+
+        // Handles paste event (Ctrl+V)
+        document.addEventListener("paste", function(e) {
+            const tbl = document.getElementById("dataTable");
+            let active = document.activeElement;
+            let cur = active.tagName === "TD" && active.isContentEditable ? active : (active.tagName === "SELECT" ? active.parentElement : null);
+            if (!cur) return; // If no active cell or it's not a relevant cell for pasting
+            const sr = cur.parentElement.rowIndex, // Start row index
+                sc = cur.cellIndex; // Start column index
+
+            // The select columns (DNA_F_or_R and BE) are now at index 8 and 9.
+            // Editable text columns end at index 7 (gn).
+            if (sc >= 8) { // If the selected cell is a select dropdown, prevent pasting.
+                alert("Paste not allowed in this column.");
+                e.preventDefault();
+                return;
+            }
+
+            if (copiedDataBlock) { // If data was copied from within the table
+                copiedDataBlock.forEach((row, i) => {
+                    let tr = tbl.rows[sr + i];
+                    if (!tr) return; // If target row doesn't exist
+                    row.forEach((v, j) => {
+                        let cell = tr.cells[sc + j];
+                        // Ensure pasting only occurs in the remaining editable text columns
+                        if (cell && cell.cellIndex < 8) {
+                            let s = cell.querySelector("select");
+                            if (s) s.value = v; // Should not happen for text cells, but good for robustness
+                            else cell.innerText = v;
+                        }
+                    });
+                });
+                saveState();
+                e.preventDefault();
+            } else { // If data is pasted from external source (e.g., spreadsheet)
+                const data = (e.clipboardData || window.clipboardData).getData("Text");
+                const rows = data.split("\n").filter(l => l.trim());
+                rows.forEach((r, i) => {
+                    const vals = r.split("\t");
+                    let tr = tbl.rows[sr + i];
+                    if (tr) vals.forEach((v, j) => {
+                        let cell = tr.cells[sc + j];
+                        // Ensure pasting only occurs in the remaining editable text columns
+                        if (cell && cell.cellIndex < 8) {
+                            let s = cell.querySelector("select");
+                            if (s) s.value = v.trim();
+                            else cell.innerText = v.trim();
+                        }
+                    });
+                });
+                saveState();
+                e.preventDefault();
+            }
+        });
+
+        // Validates the content of the table cells against defined regex patterns
+        function validateTable() {
+            const regexes = {
+                1: /^[A-Za-z0-9._-]+$/, // fastq_r1
+                2: /^[A-Za-z0-9._-]+$/, // fastq_r2
+                3: /^[A-Za-z0-9_-]+$/,  // n
+                4: /^[A-Za-z]+$/,       // a
+                5: /^[A-Za-z0-9_-]+$/,  // an
+                6: /^[A-Za-z]+$/,       // g
+                7: /^[A-Za-z0-9_-]+$/   // gn
+                // Validations for 'q', 'w', 'wc' columns removed
+            };
+            const names = {
+                1: "fastq_r1",
+                2: "fastq_r2",
+                3: "n",
+                4: "a",
+                5: "an",
+                6: "g",
+                7: "gn"
+                // Names for 'q', 'w', 'wc' columns removed
+            };
+            const tbl = document.getElementById("dataTable");
+            let errs = [];
+            for (let i = 0; i < tbl.tBodies[0].rows.length; i++) {
+                let row = tbl.tBodies[0].rows[i];
+                // Loop through the remaining editable data columns (index 1 to 7)
+                for (let j = 1; j <= 7; j++) {
+                    let val = row.cells[j].innerText.trim();
+                    if (!val) continue; // Skip empty cells for validation (allow empty initially)
+                    let re = regexes[j];
+                    if (re && !re.test(val)) {
+                        let invalidChars = [];
+                        for (let char of val) {
+                            if (!re.test(char)) {
+                                invalidChars.push(`"${char}"`);
+                            }
+                        }
+                        errs.push(`Row ${i+1}, ${names[j]}, Invalid character(s): ${invalidChars.join(", ")}`);
+                    }
+                }
+            }
+            if (errs.length) {
+                alert("Invalid characters found:\n" + errs.join("\n"));
+                return false;
+            }
+            return true;
+        }
+
+        // Saves the table data as a tab-separated TXT file
+        function saveTXT() {
+            if (!validateTable()) return; // Validate before saving
+
+            const tbl = document.getElementById("dataTable");
+            let txt = "";
+            // Filter headers to exclude 'q', 'w', 'wc'
+            let headers = Array.from(tbl.tHead.rows[0].cells)
+                              .slice(1) // Skip the '#' index column
+                              .filter(c => !['q', 'w', 'wc'].includes(c.innerText.trim())) // Filter out unwanted column headers
+                              .map(c => c.innerText.trim());
+            txt += headers.join("\t") + "\n";
+
+            for (let i = 0; i < tbl.tBodies[0].rows.length; i++) {
+                let cells = tbl.tBodies[0].rows[i].cells;
+                let rowData = [];
+                // Iterate through cells, skipping 'q', 'w', 'wc' based on header text
+                for (let j = 1; j < cells.length; j++) {
+                    const headerText = tbl.tHead.rows[0].cells[j].innerText.trim();
+                    if (['q', 'w', 'wc'].includes(headerText)) {
+                        continue; // Skip these columns
+                    }
+                    let c = cells[j];
+                    let s = c.querySelector("select");
+                    rowData.push(s ? s.value : c.innerText.trim());
+                }
+
+                if (rowData.includes("")) {
+                    alert("Please fill in all cells before saving.");
+                    return;
+                }
+                txt += rowData.join("\t") + "\n";
+            }
+            // Create a Blob and a download link for the TXT file
+            const blob = new Blob([txt], {
+                type: "text/plain;charset=utf-8;"
+            });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "batch_file.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event listener when the DOM is fully loaded
+        window.addEventListener("DOMContentLoaded", () => {
+            const tb = document.querySelector("#dataTable tbody");
+            tb.appendChild(createRow(1)); // Add initial row
+            saveState(); // Save initial state
+
+            const newFileButton = document.getElementById("newFileButton");
+            const newFileModal = document.getElementById("newFileModal");
+            const yesButton = document.getElementById("yesButton");
+            const noButton = document.getElementById("noButton");
+
+            // Show new file confirmation modal
+            newFileButton.addEventListener("click", () => {
+                newFileModal.style.display = "block";
+            });
+
+            // Handle 'Yes' for new file: clear table and add one row
+            yesButton.addEventListener("click", () => {
+                const tb = document.querySelector("#dataTable tbody");
+                while (tb.firstChild) {
+                    tb.removeChild(tb.firstChild);
+                }
+                tb.appendChild(createRow(1));
+                saveState();
+                newFileModal.style.display = "none";
+            });
+
+            // Handle 'No' for new file: close modal
+            noButton.addEventListener("click", () => {
+                newFileModal.style.display = "none";
+            });
+
+            // Close modal if clicked outside
+            window.addEventListener("click", (event) => {
+                if (event.target === newFileModal) {
+                    newFileModal.style.display = "none";
+                }
+            });
+        });
+
+        // Adds new rows to the table, optionally autofilling from the last row
+        function addRows() {
+            const n = parseInt(prompt("How many rows to add?", "1"));
+            if (!isNaN(n) && n > 0) {
+                const tb = document.querySelector("#dataTable tbody");
+                const c = tb.rows.length; // Current number of rows
+
+                for (let i = 0; i < n; i++) {
+                    const newRow = createRow(c + i + 1);
+                    // Autofill based on the last existing row
+                    if (c > 0) {
+                        const lastRow = tb.rows[c - 1]; // Get the last row before adding new ones
+                        // Columns to autofill (indices in the new table structure):
+                        // 'a' (index 4), 'an' (index 5), 'g' (index 6), 'gn' (index 7),
+                        // 'DNA_F_or_R' (index 8), 'BE' (index 9)
+                        const colsToAutofill = [4, 5, 6, 7, 8, 9]; 
+
+                        colsToAutofill.forEach(colIndex => {
+                            const lastCell = lastRow.cells[colIndex];
+                            const newCell = newRow.cells[colIndex];
+                            if (lastCell && newCell) {
+                                let lastValue;
+                                // Get value from select or innerText
+                                if (lastCell.querySelector("select")) {
+                                    lastValue = lastCell.querySelector("select").value;
+                                } else {
+                                    lastValue = lastCell.innerText.trim();
+                                }
+
+                                // Apply value to new cell (select or innerText)
+                                if (newCell.querySelector("select")) {
+                                    newCell.querySelector("select").value = lastValue;
+                                } else {
+                                    newCell.innerText = lastValue;
+                                }
+                            }
+                        });
+                    }
+                    tb.appendChild(newRow);
+                }
+                saveState();
+            }
+        }
+
+        // Removes rows from the table
+        function removeRows() {
+            const tb = document.querySelector("#dataTable tbody");
+            const n = parseInt(prompt("How many rows to remove?", "1"));
+            if (!isNaN(n) && n > 0) {
+                // Delete rows from the end of the table
+                for (let i = 0; i < n && tb.rows.length > 0; i++) tb.deleteRow(-1);
+                saveState();
+            } else alert("Please enter a valid number.");
+        }
+    </script>
+</body>
+</html>
