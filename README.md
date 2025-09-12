@@ -72,36 +72,6 @@ chmod +x Fast_Analyzr_BE.sh
 ```
 
 
-# Usage
-After installing Fast-Analyzr-BE, follow these steps to run an analysis:
-
-```
-# 1. Go to your analysis folder
-cd /path/to/your/analysis_folder/
-
-# 2.1 Run the program (option 1)
-Fast_Analyzr_BE
-
-# 2.2 Run the program (option 2)
-/path/to/Fast-Analyzr-BE/Fast_Analyzr_BE.sh
-```
-
-# Command line options
-
-```
--h, --help                          Display this help message
--n, --no-batch                      Do not open the HTML file and create the Batch file
--s, --skip-batch-crispresso         Skip Batch file creation and CRISPResso2 execution
--c, --crispresso <key> [<value>]    Add a custom argument to CRISPRessoBatch execution.
-                                    Allowed keys:   min_frequency_alleles_around_cut_to_plot <0-100>,
-                                                    base_editor_output,
-                                                    conversion_nuc_from <A,T,C,G>,
-                                                    conversion_nuc_to <A,T,C,G>,
-                                                    n_processes <Number of processes. Can be set to 'max'>.
--ha, --haplotypes                   Runs haplotype analysis on metadata files.
-```
-
-
 # Test the installation
 
 After installing, you can run a quick test to make sure everything is working correctly.  
@@ -162,6 +132,40 @@ Haplotypes analysis completed!
 ```
 
 Finally, compare the results you obtained with the expected results located in: `Test/Expected_Final_result/`. If the files match, the installation and execution are working correctly!
+
+
+# Usage
+Follow these steps to run an analysis:
+
+```
+# 1. Activate the Conda environment
+conda activate Fast_Analyzr_BE
+
+# 2. Go to your analysis folder
+cd /path/to/your/analysis_folder/
+
+# 3.1 Run the program (option 1)
+Fast_Analyzr_BE
+
+# 3.2 Run the program (option 2)
+/path/to/Fast-Analyzr-BE/Fast_Analyzr_BE.sh
+```
+
+# Command line options
+
+```
+-h, --help                          Display this help message
+-n, --no-batch                      Do not open the HTML file and create the Batch file
+-s, --skip-batch-crispresso         Skip Batch file creation and CRISPResso2 execution
+-c, --crispresso <key> [<value>]    Add a custom argument to CRISPRessoBatch execution.
+                                    Allowed keys:   min_frequency_alleles_around_cut_to_plot <0-100>,
+                                                    base_editor_output,
+                                                    conversion_nuc_from <A,T,C,G>,
+                                                    conversion_nuc_to <A,T,C,G>,
+                                                    n_processes <Number of processes. Can be set to 'max'>.
+-ha, --haplotypes                   Runs haplotype analysis on metadata files.
+```
+
 
 # How to fill the Batch file (HTML Batch File Editor)
 This page explains how to use the Batch File Editor (the HTML interface) and what each column must contain. The editor exports a tab-delimited .txt file that is used by the pipeline.
