@@ -2051,7 +2051,7 @@ for (file_txt in files_txt) {
                            })
                          }) +
         guides(fill = guide_colorbar(
-          title = "Edition (%)",
+          title = "Editing (%)",
           barwidth = 1,
           barheight = 12,
           frame.colour = "black",
@@ -2192,7 +2192,7 @@ for (file_txt in files_txt) {
           }
         ) +
         guides(fill = guide_colorbar(
-          title = "Edition (%)",
+          title = "Editing (%)",
           barwidth = 1,
           barheight = 5,
           frame.colour = "black",
