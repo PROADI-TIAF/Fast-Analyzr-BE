@@ -42,29 +42,23 @@ Open Chrome → Settings → Downloads (or go to `chrome://settings/downloads`) 
 The way to install Fast-Analyzr-BE is via conda, follow these steps:
 
 ```
-# 1. Create the Conda environment
-conda create -n Fast_Analyzr_BE \
-  -c conda-forge -c bioconda -c defaults \
-  crispresso2 \
-  r-base=4.3.0 r-essentials r-rmarkdown r-knitr \
-  r-dplyr r-tidyr r-readxl r-openxlsx \
-  bioconductor-biostrings \
-  r-ggplot2 r-scales r-ggtext r-stringr r-rcolorbrewer \
-  r-png
+# 1. Clone the repository
+git clone https://github.com/PROADI-TIAF/Fast-Analyzr-BE.git
 
-# 2. Activate the Conda environment
+# 2. Create the Conda environment
+conda env create -f Fast-Analyzr-BE/environment.yml
+
+# 3. Activate the Conda environment
 conda activate Fast_Analyzr_BE
 
-# 3. Clone the repository
-git clone https://github.com/PROADI-TIAF/Fast-Analyzr-BE.git
-cd Fast-Analyzr-BE/
-
 # 4.1. Make the script executable, move script to global PATH and and check the script menu (option 1)
+cd Fast-Analyzr-BE/
 chmod +x Version_2/Fast_Analyzr_BE.sh
 sudo mv Version_2/Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
 Fast_Analyzr_BE -h
 
 # 4.2. Make the script executable, use it directly and check the script menu (option 2)
+cd Fast-Analyzr-BE/
 chmod +x Fast_Analyzr_BE.sh
 ./Fast_Analyzr_BE.sh -h
 ```
