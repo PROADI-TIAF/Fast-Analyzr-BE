@@ -2684,7 +2684,6 @@ else
     sed -i '$ s/,$//' "$POS_R"
 fi
 
-
 cat >> "$POS_R" <<EOF
 )
 EOF
@@ -2735,14 +2734,75 @@ allele_files <- list.files(
 # Group by batch directory
 batch_map <- split(allele_files, dirname(dirname(allele_files)))
 
-# helper: safe trim (same logic used antes)
-trim_seq <- function(x) {
+# -------------------------------------------------------------------
+# NEW: dynamic trimming based on guide length + orientation
+# Rules requested:
+# Even:
+#  16 -> 12/12
+#  18 -> 11/11
+#  20 -> 10/10
+#  22 ->  9/ 9
+#  24 ->  8/ 8
+# Odd:
+#  Forward:
+#   17 -> 12/11
+#   19 -> 11/10
+#   21 -> 10/ 9
+#   23 ->  9/ 8
+#  Reverse (because reverseComplement happens first):
+#   17 -> 11/12
+#   19 -> 10/11
+#   21 ->  9/10
+#   23 ->  8/ 9
+# -------------------------------------------------------------------
+get_trim_params <- function(guide_len, orient) {
+  if (length(guide_len) != 1 || is.na(guide_len)) stop("guide_len must be a single non-NA value.")
+  guide_len <- as.integer(guide_len)
+
+  orient <- toupper(as.character(orient))
+  if (!orient %in% c("F", "R")) stop("Invalid orient: ", orient, " (expected 'F' or 'R').")
+
+  # Accept only the ranges you specified (16-24). If you want to expand later, we can.
+  if (guide_len < 16 || guide_len > 24) {
+    stop("Unsupported guide length: ", guide_len, " (supported: 16-24).")
+  }
+
+  if (guide_len %% 2 == 0) {
+    cut <- 20 - (guide_len / 2)  # matches 16->12, 18->11, 20->10, 22->9, 24->8
+    left  <- cut
+    right <- cut
+  } else {
+    # Forward asymmetric (left uses floor, right uses ceiling)
+    left_f  <- 20 - floor(guide_len / 2)
+    right_f <- 20 - ceiling(guide_len / 2)
+
+    if (orient == "F") {
+      left  <- left_f
+      right <- right_f
+    } else {
+      # Reverse: swap because reverseComplement is applied first in the pipeline
+      left  <- right_f
+      right <- left_f
+    }
+  }
+
+  if (left < 0 || right < 0) stop("Computed negative trimming (left=", left, ", right=", right, "). Check rules.")
+  list(left = as.integer(left), right = as.integer(right))
+}
+
+trim_seq <- function(x, guide_len, orient) {
   # preserve NA
   x_na <- is.na(x)
-  res <- as.character(x)
-  # if length > 20 do substr(11, nchar-10) else return as-is
-  keep <- !x_na & nchar(res) > 20
-  res[keep] <- substr(res[keep], 11, nchar(res[keep]) - 10)
+  res  <- as.character(x)
+
+  params <- get_trim_params(guide_len = guide_len, orient = orient)
+  left  <- params$left
+  right <- params$right
+
+  # keep only if sequence is longer than left+right
+  keep <- !x_na & nchar(res) > (left + right)
+  res[keep] <- substr(res[keep], left + 1, nchar(res[keep]) - right)
+
   res[x_na] <- NA_character_
   return(res)
 }
@@ -2756,12 +2816,11 @@ for (batch_dir in names(batch_map)) {
   meta_file <- file.path(default_dir, paste0(batch_short, ".txt"))
   if (!file.exists(meta_file)) stop("Metadata TXT not found: ", meta_file)
   df_meta <- read.delim(
-  meta_file,
-  stringsAsFactors = FALSE,
-  check.names = FALSE,
-  colClasses = "character"
-)
-
+    meta_file,
+    stringsAsFactors = FALSE,
+    check.names = FALSE,
+    colClasses = "character"
+  )
 
   # Validate metadata columns
   required_cols <- c("n", "g", "BE", "DNA_F_or_R")
@@ -2770,35 +2829,35 @@ for (batch_dir in names(batch_map)) {
   }
 
   # Extract BE type and orientation (constant within batch)
-be_type <- as.character(df_meta$BE[1])
-orient  <- as.character(df_meta$DNA_F_or_R[1])
+  be_type <- as.character(df_meta$BE[1])
+  orient  <- as.character(df_meta$DNA_F_or_R[1])
 
-be_type <- toupper(be_type)
-orient  <- toupper(orient)
+  be_type <- toupper(be_type)
+  orient  <- toupper(orient)
 
-if (!be_type %in% c("ABE", "CBE")) {
-  stop("Invalid BE: ", be_type)
-}
+  if (!be_type %in% c("ABE", "CBE")) {
+    stop("Invalid BE: ", be_type)
+  }
 
-if (!orient %in% c("F", "R")) {
-  stop(
-    "Invalid orientation: ", orient,
-    " (expected 'F' or 'R' in metadata column DNA_F_or_R)"
-  )
-}
+  if (!orient %in% c("F", "R")) {
+    stop(
+      "Invalid orientation: ", orient,
+      " (expected 'F' or 'R' in metadata column DNA_F_or_R)"
+    )
+  }
 
   alleles       <- if (be_type == "ABE") c("A", "G") else c("C", "T")
   expected_base <- if (be_type == "ABE") "A" else "C"
 
   # Initial checks for each sample
   for (f in batch_map[[batch_dir]]) {
-    sample     <- sub("^CRISPResso_on_", "", basename(dirname(f)))
+    sample      <- sub("^CRISPResso_on_", "", basename(dirname(f)))
     meta_sample <- df_meta %>% filter(n == sample)
     if (nrow(meta_sample) != 1) {
       stop("Sample '", sample, "' not found or duplicated in metadata.")
     }
     guide_seq <- meta_sample$g
-    guide      <- sub(".*Alleles_frequency_table_around_(.*)\\.txt$", "\\1", basename(f))
+    guide     <- sub(".*Alleles_frequency_table_around_(.*)\\.txt$", "\\1", basename(f))
     if (!guide %in% names(pos_list)) {
       stop("Guide '", guide, "' not found in pos_list.")
     }
@@ -2824,40 +2883,50 @@ if (!orient %in% c("F", "R")) {
         ))
       }
     }
+
+    # NEW: validate supported guide length (16-24) early
+    guide_len <- nchar(guide_seq)
+    if (guide_len < 16 || guide_len > 24) {
+      stop("Sample '", sample, "': unsupported guide length ", guide_len, " (supported: 16-24).")
+    }
   }
 
   # If all checks pass, process the batch
   out_list <- list()
   for (f in batch_map[[batch_dir]]) {
     sample <- sub("^CRISPResso_on_", "", basename(dirname(f)))
+
+    # NEW: recover guide sequence (for guide_len) from metadata for this sample
+    meta_sample <- df_meta %>% filter(n == sample)
+    if (nrow(meta_sample) != 1) {
+      stop("Sample '", sample, "' not found or duplicated in metadata (processing step).")
+    }
+    guide_seq <- as.character(meta_sample$g)
+    guide_len <- nchar(guide_seq)
+
     df_raw <- read.delim(f, stringsAsFactors = FALSE, check.names = FALSE)
-    guide <- sub(".*Alleles_frequency_table_around_(.*)\\.txt$", "\\1", basename(f))
+    guide  <- sub(".*Alleles_frequency_table_around_(.*)\\.txt$", "\\1", basename(f))
     positions <- pos_list[[guide]]
 
     # Ensure columns exist (some CRISPResso outputs may vary)
-    # We'll try to use: Aligned_Sequence, Reference_Sequence (optional), n_inserted (optional), Unedited, #Reads, %Reads
     if (!"Aligned_Sequence" %in% names(df_raw)) stop("Aligned_Sequence column not found in file: ", f)
     if (!"#Reads" %in% names(df_raw)) stop("#Reads column not found in file: ", f)
     if (!"%Reads" %in% names(df_raw)) stop("%Reads column not found in file: ", f)
     if (!"Unedited" %in% names(df_raw)) {
-      # If Unedited missing, create default NA to avoid errors
       df_raw$Unedited <- NA
     }
-    # If n_inserted absent, create 0
     if (!"n_inserted" %in% names(df_raw)) df_raw$n_inserted <- 0
-    # If Reference_Sequence absent, create NA
     if (!"Reference_Sequence" %in% names(df_raw)) df_raw$Reference_Sequence <- NA
 
     # Prepare sequences: apply orientation and trim in both Aligned_Sequence and Reference_Sequence
     df_proc <- df_raw %>%
       mutate(
-        Aligned_Sequence = as.character(Aligned_Sequence),
+        Aligned_Sequence   = as.character(Aligned_Sequence),
         Reference_Sequence = as.character(Reference_Sequence)
       )
 
     # apply reverse complement if orientation is R (for both sequences)
     if (orient == "R") {
-      # handle NA gracefully
       df_proc$Aligned_Sequence <- as.character(
         ifelse(!is.na(df_proc$Aligned_Sequence),
                as.character(reverseComplement(DNAStringSet(df_proc$Aligned_Sequence))),
@@ -2870,13 +2939,11 @@ if (!orient %in% c("F", "R")) {
       )
     }
 
-    # Trim sequences (same window as before: remove first 10 and last 10 after we reversed if needed)
-    df_proc$Aligned_Sequence <- trim_seq(df_proc$Aligned_Sequence)
-    df_proc$Reference_Sequence <- trim_seq(df_proc$Reference_Sequence)
+    # NEW: dynamic trimming based on guide_len + orient
+    df_proc$Aligned_Sequence   <- trim_seq(df_proc$Aligned_Sequence,   guide_len = guide_len, orient = orient)
+    df_proc$Reference_Sequence <- trim_seq(df_proc$Reference_Sequence, guide_len = guide_len, orient = orient)
 
     # Decide which sequence to use per-row:
-    # If n_inserted > 0 AND Reference_Sequence is available (not NA), use Reference_Sequence.
-    # Otherwise use Aligned_Sequence.
     df_proc <- df_proc %>%
       mutate(
         seq_used = ifelse(!is.na(n_inserted) & n_inserted > 0 & !is.na(Reference_Sequence) & Reference_Sequence != "",
@@ -2892,7 +2959,7 @@ if (!orient %in% c("F", "R")) {
         `%Reads` = sum(`%Reads`, na.rm = TRUE),
         .groups = "drop"
       ) %>%
-      rename(Aligned_Sequence = seq_used) # keep downstream names similar to prior code
+      rename(Aligned_Sequence = seq_used)
 
     # Generate possible haplotypes grid (same as before)
     haps_grid <- expand.grid(
@@ -2902,10 +2969,7 @@ if (!orient %in% c("F", "R")) {
       mutate(hap = apply(., 1, function(x) paste0(x, positions, collapse = "")))
 
     # Compute observed haplotypes:
-    # For each row, extract bases at 'positions' from Aligned_Sequence (which holds seq_used now).
-    # If any selected position is '-', classify as 'others'.
     extract_bases_with_dash <- function(seq, pos) {
-      # returns a character vector of bases at positions, handling NA or short seq
       if (is.na(seq)) return(NA_character_)
       sapply(pos, function(p) {
         if (p > nchar(seq) || p < 1) return(NA_character_)
@@ -2916,9 +2980,8 @@ if (!orient %in% c("F", "R")) {
     df_hap_obs <- df_final %>%
       rowwise() %>%
       mutate(
-        bases = list(extract_bases_with_dash(Aligned_Sequence, positions)),
+        bases    = list(extract_bases_with_dash(Aligned_Sequence, positions)),
         any_dash = any(unlist(bases) == "-", na.rm = FALSE),
-        # If any_dash TRUE -> assign 'others'. Else build hap as base+position concatenation to match haps_grid.
         hap = if (isTRUE(any_dash) || any(is.na(unlist(bases)))) {
           "others"
         } else {
@@ -2929,7 +2992,7 @@ if (!orient %in% c("F", "R")) {
       group_by(hap) %>%
       summarise(percent = round(sum(`%Reads`, na.rm = TRUE), 2), .groups = "drop")
 
-    # Merge known haplotypes and calculate "others" (including any hap not in the known grid)
+    # Merge known haplotypes and calculate "others"
     df_known <- haps_grid %>%
       select(hap) %>%
       left_join(df_hap_obs %>% filter(hap %in% haps_grid$hap), by = "hap") %>%
@@ -2967,7 +3030,6 @@ if (!orient %in% c("F", "R")) {
       `Others haplotypes` = others
     )
   sample_order <- df_meta[["n"]]
-  # Keep only samples present in combined; match will put NA for missing so filter
   combined <- combined[match(sample_order, combined$Samples), ]
   combined <- combined[!is.na(combined$Samples), ]
 
@@ -3053,14 +3115,11 @@ style_haplotype <- function(h) {
 
 # 4) function to order haplotypes (A/C first, G/T later, Other last)
 order_haplotypes <- function(haplotypes) {
-  # remove suffixes and spaces
   base_names <- gsub(" ", "", gsub("\\..*", "", haplotypes))
-  # compute “weight”: (G/T) – (A/C)
   weights <- sapply(base_names, function(x) {
     if (tolower(x) == "otherhaplotypes") return(Inf)
     str_count(x, "[GgTt]") - str_count(x, "[AaCc]")
   })
-  # order
   haplotypes[order(weights, haplotypes)]
 }
 
@@ -3123,8 +3182,6 @@ for (fn in xlsx_files) {
   levels(df_long$Haplotype) <- haplo_formatted
   
   # e) build color palette:
-  #    - blues for real haplotypes
-  #    - gray for "Other haplotypes"
   other_idx <- which(haplo_ordered == "Other haplotypes")
   real_idx  <- setdiff(seq_along(haplo_ordered), other_idx)
   pal_real  <- colorRampPalette(brewer.pal(9, "Blues"))(length(real_idx))
@@ -3209,8 +3266,8 @@ for (fn in xlsx_files) {
 message("All stacked-bar plots were successfully generated.")
 EOF
 
-echo 
- 
+echo
+
 RMD="pipeline.Rmd"
 
 echo "Rscript -e \"rmarkdown::render('$RMD', quiet=TRUE)\""
@@ -3224,20 +3281,20 @@ rm -f pos_list_input.R pipeline.Rmd pipeline.html 2>/dev/null
 }
 
 check_r_exit_code() {
-    local R_EXIT_CODE=$1  
-    if [ "$R_EXIT_CODE" -eq 0 ]; then
-        display_footer
-        echo ""
-        echo -e "${NC}Haplotypes analysis completed!${NC}"
-        echo ""
-    else
-        echo ""
-        echo ""
-        echo -e "${RED}Haplotypes analysis failed.${NC}"
-        echo ""
-    fi
+local R_EXIT_CODE=$1
+if [ "$R_EXIT_CODE" -eq 0 ]; then
+display_footer
+echo ""
+echo -e "${NC}Haplotypes analysis completed!${NC}"
+echo ""
+else
+echo ""
+echo ""
+echo -e "${RED}Haplotypes analysis failed.${NC}"
+echo ""
+fi
 }
 
 if $run_haplotypes; then
-    run_haplotypes_analysis
+run_haplotypes_analysis
 fi
