@@ -1,1 +1,16 @@
+Simulated Base Editing Conditions
 
+To evaluate the performance of the pipeline under controlled scenarios, six experimental conditions were simulated. These datasets were designed to represent common outcomes observed in adenine base editing (ABE) and cytosine base editing (CBE) experiments. For each condition, datasets were generated considering both guide RNA orientations (forward and reverse) to ensure proper strand-aware analysis.
+1- Non-edited samples
+Control datasets containing no base editing events. These samples represent background sequencing data and are used to evaluate false-positive detection rates.
+2- Single edited haplotype
+Datasets containing a single edited haplotype introduced at a defined frequency. A single nucleotide conversion within the editing window was simulated (A→G for ABE or C→T for CBE).
+3- Multiple edited haplotypes
+Datasets containing multiple edited haplotypes with different combinations of substitutions within the editing window. This scenario reflects typical base editing outcomes where multiple editable bases may be modified simultaneously.
+4- Background substitutions outside the editing window
+Non-specific nucleotide substitutions were introduced outside the canonical editing window to simulate sequencing noise or unrelated genetic variation.
+5- Insertion and deletion events (indels)
+Insertions and deletions were introduced at predefined frequencies to mimic low-frequency indel formation that may occur in editing experiments or sequencing artifacts.
+6- Low-quality sequencing reads
+Sequencing noise was simulated by introducing randomized base errors together with reduced base quality score distributions, allowing evaluation of pipeline robustness under lower-quality sequencing conditions.
+All simulated datasets were generated for both forward and reverse guide orientations to ensure correct detection of strand-dependent base editing conversions (ABE: A→G / T→C; CBE: C→T / G→A).
