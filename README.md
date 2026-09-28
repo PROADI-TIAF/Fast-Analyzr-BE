@@ -51,16 +51,10 @@ conda env create -f Fast-Analyzr-BE/environment.yml
 # 3. Activate the Conda environment
 conda activate Fast_Analyzr_BE
 
-# 4.1. Make the script executable, move script to global PATH and and check the script menu (option 1)
-cd Fast-Analyzr-BE/
-chmod +x Version_2/Fast_Analyzr_BE.sh
-sudo mv Version_2/Fast_Analyzr_BE.sh /usr/local/bin/Fast_Analyzr_BE
+# 4. Make the script executable
+mv Fast-Analyzr-BE/Version_2/Fast_Analyzr_BE.sh $CONDA_PREFIX/bin/Fast_Analyzr_BE
+chmod +x $CONDA_PREFIX/bin/Fast_Analyzr_BE
 Fast_Analyzr_BE -h
-
-# 4.2. Make the script executable, use it directly and check the script menu (option 2)
-cd Fast-Analyzr-BE/
-chmod +x Fast_Analyzr_BE.sh
-./Fast_Analyzr_BE.sh -h
 ```
 
 
@@ -75,11 +69,8 @@ The repository already contains example batch files in the `Test/` folder.
 # 1. Enter the test folder
 cd Test/
    
-# 2.1 Run the pipeline with the test data (option 1)
+# 2 Run the pipeline with the test data
 Fast_Analyzr_BE -n -ha
-
-# 2.2 Run the pipeline with the test data (option 2)
-../Fast_Analyzr_BE.sh -n -ha
 ```
 
 If everything is correct, you should see the following message (symbolizing that the base editing and indel calculation is complete):
@@ -136,11 +127,8 @@ conda activate Fast_Analyzr_BE
 # 2. Go to your analysis folder
 cd /path/to/your/analysis_folder/
 
-# 3.1 Run the program (option 1)
+# 3. Run the program
 Fast_Analyzr_BE
-
-# 3.2 Run the program (option 2)
-/path/to/Fast-Analyzr-BE/Fast_Analyzr_BE.sh
 ```
 
 # Command line options
