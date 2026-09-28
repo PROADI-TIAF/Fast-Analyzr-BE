@@ -11,6 +11,7 @@ dependencies:
   - fastp=0.23.4
   - bowtie2=2.5.4
   - samtools=1.6
+  - bc
 
   - r-base=4.3.0
   - r-essentials=4.3
